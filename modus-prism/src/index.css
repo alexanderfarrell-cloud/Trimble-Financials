@@ -779,3 +779,63 @@ modus-wc-tabs button[role='tab'] {
   flex-shrink: 0;
 }
 
+/* ── Job stat cards (iteration 5+) ──────────────────────────────────────── */
+
+.job-stat-cards {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.job-stat-card {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: var(--modus-wc-color-base-100);
+  border-radius: 6px;
+  padding: 12px 14px;
+}
+
+.job-stat-card-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--modus-wc-color-base-content-low-contrast);
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.job-stat-card-value-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.job-stat-card-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--modus-wc-color-base-content);
+  line-height: 1.15;
+}
+
+.job-stat-card-meta {
+  font-size: 0.68rem;
+  color: var(--modus-wc-color-base-content-low-contrast);
+  line-height: 1;
+  margin-top: 3px;
+}
+
+.job-stat-card-icon-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1.5px solid var(--modus-wc-color-base-300);
+  border-radius: 6px;
+  margin-top: 10px;
+  color: var(--modus-wc-color-secondary, #7c5cbf);
+}
+

@@ -342,9 +342,10 @@ interface BudgetBarProps {
   onToggleMilestone: (id: string) => void
   showMilestones?: boolean
   aiInsight?: string
+  showHealthLabel?: boolean
 }
 
-function BudgetBar({ spendPct, actualSpend, milestones, onToggleMilestone, showMilestones = true, aiInsight }: BudgetBarProps) {
+function BudgetBar({ spendPct, actualSpend, milestones, onToggleMilestone, showMilestones = true, aiInsight, showHealthLabel = true }: BudgetBarProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null)
   const health         = computeHealth(spendPct, milestones)
   const completedCount = milestones.filter(m => m.isCompleted).length
@@ -405,13 +406,15 @@ function BudgetBar({ spendPct, actualSpend, milestones, onToggleMilestone, showM
           </>
         )}
         <span className="budget-bar-dot">·</span>
-        <span
-          className="budget-bar-health"
-          style={{ color: healthColor[health] }}
-        >
-          {(health === 'at-risk' || health === 'over-budget') && '⚠ '}
-          {HEALTH_LABEL[health]}
-        </span>
+        {showHealthLabel && (
+          <span
+            className="budget-bar-health"
+            style={{ color: healthColor[health] }}
+          >
+            {(health === 'at-risk' || health === 'over-budget') && '⚠ '}
+            {HEALTH_LABEL[health]}
+          </span>
+        )}
         {aiInsight && (
           <>
             <span className="budget-bar-dot">·</span>
@@ -431,9 +434,10 @@ interface TimeBarProps {
   daysIn: number
   daysRemaining: number
   onToggleMilestone: (id: string) => void
+  showMilestones?: boolean
 }
 
-function TimeBar({ milestones, timePct, daysIn, daysRemaining, onToggleMilestone }: TimeBarProps) {
+function TimeBar({ milestones, timePct, daysIn, daysRemaining, onToggleMilestone, showMilestones = true }: TimeBarProps) {
   const [hoveredId, setHoveredId] = useState<string | null>(null)
 
   const completedCount = milestones.filter(m => m.isCompleted).length
@@ -453,25 +457,27 @@ function TimeBar({ milestones, timePct, daysIn, daysRemaining, onToggleMilestone
   return (
     <div className="budget-bar-outer">
       {/* Milestone name labels above the track at their timeline positions */}
-      <div className="budget-bar-label-row" aria-hidden="true">
-        {milestones.map(m => {
-          const isOverdue = !m.isCompleted && timePct >= m.targetDatePct
-          const color = m.isCompleted
-            ? TICK_COLOR.completed
-            : isOverdue
-            ? TICK_COLOR['missed-mild']
-            : TICK_COLOR.upcoming
-          return (
-            <span
-              key={m.id}
-              className="milestone-name-label"
-              style={{ left: `${m.targetDatePct}%`, color }}
-            >
-              {m.name}
-            </span>
-          )
-        })}
-      </div>
+      {showMilestones && (
+        <div className="budget-bar-label-row" aria-hidden="true">
+          {milestones.map(m => {
+            const isOverdue = !m.isCompleted && timePct >= m.targetDatePct
+            const color = m.isCompleted
+              ? TICK_COLOR.completed
+              : isOverdue
+              ? TICK_COLOR['missed-mild']
+              : TICK_COLOR.upcoming
+            return (
+              <span
+                key={m.id}
+                className="milestone-name-label"
+                style={{ left: `${m.targetDatePct}%`, color }}
+              >
+                {m.name}
+              </span>
+            )
+          })}
+        </div>
+      )}
 
       {/* Track — elapsed fill + milestone ticks + today needle */}
       <div className="budget-bar-track-wrap">
@@ -481,7 +487,7 @@ function TimeBar({ milestones, timePct, daysIn, daysRemaining, onToggleMilestone
         />
 
         {/* Milestone ticks in schedule mode — interactive, at targetDatePct positions */}
-        {milestones.map(m => (
+        {showMilestones && milestones.map(m => (
           <MilestoneTick
             key={m.id}
             milestone={m}
@@ -529,6 +535,10 @@ interface DualAxisBudgetBarProps {
   daysIn: number
   daysRemaining: number
   showInsight?: boolean
+  showScheduleMilestones?: boolean
+  showScheduleBar?: boolean
+  showHealthLabel?: boolean
+  showAxisLabels?: boolean
 }
 
 function DualAxisBudgetBar({
@@ -540,6 +550,10 @@ function DualAxisBudgetBar({
   daysIn,
   daysRemaining,
   showInsight = false,
+  showScheduleMilestones = true,
+  showScheduleBar = true,
+  showHealthLabel = true,
+  showAxisLabels = true,
 }: DualAxisBudgetBarProps) {
   const health    = computeHealth(spendPct, milestones)
   const aiInsight = showInsight ? computeAiInsight(health, milestones, timePct) : undefined
@@ -547,7 +561,7 @@ function DualAxisBudgetBar({
     <div className="dual-axis-wrap">
       {/* Budget row — clean fill bar, health color, no milestone ticks */}
       <div className="dual-axis-row dual-axis-row--bare">
-        <span className="dual-axis-label">Budget</span>
+        {showAxisLabels && <span className="dual-axis-label">Budget</span>}
         <BudgetBar
           spendPct={spendPct}
           actualSpend={actualSpend}
@@ -555,20 +569,24 @@ function DualAxisBudgetBar({
           onToggleMilestone={onToggleMilestone}
           showMilestones={false}
           aiInsight={aiInsight}
+          showHealthLabel={showHealthLabel}
         />
       </div>
 
       {/* Schedule row — milestone ticks at deadline positions, check-off here */}
-      <div className="dual-axis-row">
-        <span className="dual-axis-label">Schedule</span>
-        <TimeBar
-          milestones={milestones}
-          timePct={timePct}
-          daysIn={daysIn}
-          daysRemaining={daysRemaining}
-          onToggleMilestone={onToggleMilestone}
-        />
-      </div>
+      {showScheduleBar && (
+        <div className={`dual-axis-row${showScheduleMilestones ? '' : ' dual-axis-row--bare'}`}>
+          <span className="dual-axis-label">Schedule</span>
+          <TimeBar
+            milestones={milestones}
+            timePct={timePct}
+            daysIn={daysIn}
+            daysRemaining={daysRemaining}
+            onToggleMilestone={onToggleMilestone}
+            showMilestones={showScheduleMilestones}
+          />
+        </div>
+      )}
     </div>
   )
 }
@@ -633,6 +651,88 @@ function MilestoneListPanel({ milestones, timePct, onToggle, onManage }: Milesto
           </div>
         )
       })}
+    </div>
+  )
+}
+
+// ─── Job stat cards (iteration 5+) ──────────────────────────────────────────
+
+interface JobStatCardsProps {
+  milestones: MilestoneData[]
+  timePct: number
+  spendPct: number
+  onManage: () => void
+}
+
+function JobStatCards({ milestones, timePct, spendPct, onManage }: JobStatCardsProps) {
+  const health        = computeHealth(spendPct, milestones)
+  const completedCount = milestones.filter(m => m.isCompleted).length
+  const overdueCount  = milestones.filter(m => !m.isCompleted && timePct >= m.targetDatePct).length
+
+  const variance         = ACTUAL_SPEND - TOTAL_BUDGET * (timePct / 100)
+  const varianceFavorable = variance <= 0
+
+  const healthColor: Record<HealthState, string> = {
+    'on-track':    'var(--modus-wc-color-primary)',
+    'at-risk':     'var(--modus-wc-color-warning, #fbad26)',
+    'over-budget': 'var(--modus-wc-color-danger, #da212c)',
+    'ahead':       'var(--modus-wc-color-success, #006638)',
+  }
+
+  return (
+    <div className="job-stat-cards">
+      {/* Milestones */}
+      <div className="job-stat-card">
+        <span className="job-stat-card-label">Milestones</span>
+        <div className="job-stat-card-value-row">
+          <span className="job-stat-card-value">
+            {completedCount}&thinsp;/&thinsp;{milestones.length}
+          </span>
+          <ModusWcButton
+            size="sm"
+            variant="borderless"
+            color="secondary"
+            onButtonClick={onManage}
+          >
+            View
+          </ModusWcButton>
+        </div>
+        <div className="job-stat-card-meta">
+          {overdueCount > 0 ? (
+            <span style={{ color: 'var(--modus-wc-color-warning, #fbad26)' }}>
+              ⚠ {overdueCount} overdue
+            </span>
+          ) : (
+            'complete'
+          )}
+        </div>
+      </div>
+
+      {/* Budget Health */}
+      <div className="job-stat-card">
+        <span className="job-stat-card-label">Budget Health</span>
+        <div className="job-stat-card-value-row">
+          <span className="job-stat-card-value" style={{ color: healthColor[health] }}>
+            {(health === 'at-risk' || health === 'over-budget') && '⚠ '}
+            {HEALTH_LABEL[health]}
+          </span>
+        </div>
+        <div className="job-stat-card-meta">{spendPct.toFixed(1)}% consumed</div>
+      </div>
+
+      {/* Variance */}
+      <div className="job-stat-card">
+        <span className="job-stat-card-label">Variance</span>
+        <div className="job-stat-card-value-row">
+          <span
+            className="job-stat-card-value"
+            style={{ color: varianceFavorable ? 'var(--modus-wc-color-success, #006638)' : 'var(--modus-wc-color-danger, #da212c)' }}
+          >
+            {varianceFavorable ? '−' : '+'}{fmt(Math.abs(variance))}
+          </span>
+        </div>
+        <div className="job-stat-card-meta">vs time-based estimate</div>
+      </div>
     </div>
   )
 }
@@ -1168,7 +1268,11 @@ export default function JobDetailPage({ iteration }: { iteration: Iteration }) {
                 timePct={TIME_PCT}
                 daysIn={DAYS_ELAPSED}
                 daysRemaining={DAYS_REMAINING}
-                showInsight={iteration >= 4}
+                showInsight={iteration === 4}
+                showScheduleMilestones={iteration < 5}
+                showScheduleBar={iteration < 5}
+                showHealthLabel={iteration < 5}
+                showAxisLabels={iteration < 5}
               />
             ) : (
               <BudgetBar
@@ -1179,11 +1283,19 @@ export default function JobDetailPage({ iteration }: { iteration: Iteration }) {
                 showMilestones={iteration >= 2}
               />
             )}
-            {iteration >= 4 && (
+            {iteration === 4 && (
               <MilestoneListPanel
                 milestones={milestones}
                 timePct={TIME_PCT}
                 onToggle={toggleMilestone}
+                onManage={() => setPanelOpen(true)}
+              />
+            )}
+            {iteration >= 5 && (
+              <JobStatCards
+                milestones={milestones}
+                timePct={TIME_PCT}
+                spendPct={SPEND_PCT}
                 onManage={() => setPanelOpen(true)}
               />
             )}
