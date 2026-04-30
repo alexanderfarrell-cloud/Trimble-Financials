@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import {
   ModusWcCard,
   ModusWcTypography,
@@ -6,6 +6,7 @@ import {
   ModusWcBadge,
   ModusWcButton,
   ModusWcCheckbox,
+  ModusWcSwitch,
 } from '@trimble-oss/moduswebcomponents-react'
 
 export type Iteration = 1 | 2 | 3 | 4 | 5
@@ -65,6 +66,22 @@ const JOB = {
 const TOTAL_BUDGET = JOB.revenue.estimate       // $5,232.50
 const ACTUAL_SPEND = JOB.costDistribution.totalActual  // $300.00
 const SPEND_PCT    = JOB.percentComplete        // 6.6 — authoritative from job record
+
+// ─── Over-budget simulation scenario ────────────────────────────────────────
+
+const OB_ACTUAL_SPEND = 5800
+const OB_SPEND_PCT    = parseFloat(((OB_ACTUAL_SPEND / TOTAL_BUDGET) * 100).toFixed(1)) // ~110.8
+const OB_COST_DIST = {
+  totalActual: 5800,
+  totalEstimate: 4550,
+  categories: [
+    { label: 'Material',    actual: 2800, estimate: 1500 },
+    { label: 'Labor',       actual: 3000, estimate: 3050 },
+    { label: 'Subcontract', actual: 0,    estimate: 0    },
+    { label: 'Equipment',   actual: 0,    estimate: 0    },
+    { label: 'Other',       actual: 0,    estimate: 0    },
+  ],
+}
 
 // ─── Timeline constants (fixed demo dates) ───────────────────────────────────
 // Job: May 18 → Jun 29 = 42 days. Demo "today" = May 22 (day 4).
@@ -381,7 +398,7 @@ function BudgetBar({ spendPct, actualSpend, milestones, onToggleMilestone, showM
       <div className="budget-bar-track-wrap">
         <div
           className={`budget-bar-fill ${HEALTH_FILL_CLASS[health]}`}
-          style={{ width: `${spendPct}%` }}
+          style={{ width: `${Math.min(100, spendPct)}%` }}
         />
         {showMilestones && milestones.map(m => (
           <MilestoneTick
@@ -398,14 +415,12 @@ function BudgetBar({ spendPct, actualSpend, milestones, onToggleMilestone, showM
 
       {/* Summary line */}
       <div className="budget-bar-summary">
-        <span>{spendPct.toFixed(1)}% spent</span>
         {showMilestones && (
-          <>
-            <span className="budget-bar-dot">·</span>
-            <span>{completedCount} of {milestones.length} milestones complete</span>
-          </>
+          <span>{completedCount} of {milestones.length} milestones complete</span>
         )}
-        <span className="budget-bar-dot">·</span>
+        {showMilestones && showHealthLabel && (
+          <span className="budget-bar-dot">·</span>
+        )}
         {showHealthLabel && (
           <span
             className="budget-bar-health"
@@ -417,7 +432,7 @@ function BudgetBar({ spendPct, actualSpend, milestones, onToggleMilestone, showM
         )}
         {aiInsight && (
           <>
-            <span className="budget-bar-dot">·</span>
+            {(showMilestones || showHealthLabel) && <span className="budget-bar-dot">·</span>}
             <span className="budget-bar-ai-insight">{aiInsight}</span>
           </>
         )}
@@ -661,16 +676,35 @@ interface JobStatCardsProps {
   milestones: MilestoneData[]
   timePct: number
   spendPct: number
+  actualSpend: number
   onManage: () => void
 }
 
-function JobStatCards({ milestones, timePct, spendPct, onManage }: JobStatCardsProps) {
+function JobStatCards({ milestones, timePct, spendPct, actualSpend, onManage }: JobStatCardsProps) {
   const health        = computeHealth(spendPct, milestones)
   const completedCount = milestones.filter(m => m.isCompleted).length
   const overdueCount  = milestones.filter(m => !m.isCompleted && timePct >= m.targetDatePct).length
 
-  const variance         = ACTUAL_SPEND - TOTAL_BUDGET * (timePct / 100)
+  const variance         = actualSpend - TOTAL_BUDGET * (timePct / 100)
   const varianceFavorable = variance <= 0
+
+  const [variancePopoverOpen, setVariancePopoverOpen] = useState(false)
+  const varianceAnchorRef = useRef<HTMLButtonElement>(null)
+  const variancePopoverRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!variancePopoverOpen) return
+    function handleClickOutside(e: MouseEvent) {
+      if (
+        varianceAnchorRef.current && !varianceAnchorRef.current.contains(e.target as Node) &&
+        variancePopoverRef.current && !variancePopoverRef.current.contains(e.target as Node)
+      ) {
+        setVariancePopoverOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [variancePopoverOpen])
 
   const healthColor: Record<HealthState, string> = {
     'on-track':    'var(--modus-wc-color-primary)',
@@ -721,8 +755,37 @@ function JobStatCards({ milestones, timePct, spendPct, onManage }: JobStatCardsP
       </div>
 
       {/* Variance */}
-      <div className="job-stat-card">
-        <span className="job-stat-card-label">Variance</span>
+      <div className="job-stat-card" style={{ position: 'relative' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <span className="job-stat-card-label">Variance</span>
+          <button
+            ref={varianceAnchorRef}
+            className="variance-info-btn"
+            aria-label="Variance explanation"
+            aria-expanded={variancePopoverOpen}
+            onClick={() => setVariancePopoverOpen(o => !o)}
+          >
+            <ModusWcIcon name="info" size="sm" decorative />
+          </button>
+        </div>
+        {variancePopoverOpen && (
+          <div ref={variancePopoverRef} className="variance-popover">
+            <p className="variance-popover-formula">
+              Actual Spend − (Budget × % time elapsed)
+            </p>
+            <p className="variance-popover-body">
+              Shows whether you're spending ahead or behind the pace of the project timeline.
+            </p>
+            <div className="variance-popover-legend">
+              <span style={{ color: 'var(--modus-wc-color-success, #006638)' }}>−&thinsp;Green</span>
+              {' '}= under-paced (favorable)
+            </div>
+            <div className="variance-popover-legend">
+              <span style={{ color: 'var(--modus-wc-color-danger, #da212c)' }}>+&thinsp;Red</span>
+              {' '}= over-paced (unfavorable)
+            </div>
+          </div>
+        )}
         <div className="job-stat-card-value-row">
           <span
             className="job-stat-card-value"
@@ -924,11 +987,12 @@ function fmtTick(n: number) {
 const LABEL_W = 76  // px — y-axis label column width
 const ROW_H   = 36  // px — height of each category row
 
-function CostDistributionCard({ iteration }: { iteration: Iteration }) {
-  const { costDistribution } = JOB
+type CostDistribution = typeof JOB.costDistribution
+
+function CostDistributionCard({ iteration, costDistribution }: { iteration: Iteration; costDistribution: CostDistribution }) {
   void iteration
 
-  const { ticks, niceMax } = getNiceTicks(costDistribution.totalEstimate)
+  const { ticks, niceMax } = getNiceTicks(Math.max(costDistribution.totalEstimate, costDistribution.totalActual))
   const totalRows = costDistribution.categories.length
   const chartH = totalRows * ROW_H
 
@@ -1142,7 +1206,7 @@ function ContractTab() {
 
 // ─── Overview tab ────────────────────────────────────────────────────────────
 
-function OverviewTab({ iteration }: { iteration: Iteration }) {
+function OverviewTab({ iteration, costDistribution }: { iteration: Iteration; costDistribution: CostDistribution }) {
   return (
     <div className="flex flex-col gap-3">
       <div
@@ -1155,7 +1219,7 @@ function OverviewTab({ iteration }: { iteration: Iteration }) {
       >
         <div className="flex flex-col gap-3">
           <RevenueMarginCard iteration={iteration} />
-          <CostDistributionCard iteration={iteration} />
+          <CostDistributionCard iteration={iteration} costDistribution={costDistribution} />
         </div>
         <CashflowCard iteration={iteration} />
       </div>
@@ -1179,6 +1243,11 @@ export default function JobDetailPage({ iteration }: { iteration: Iteration }) {
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [milestones, setMilestones] = useState<MilestoneData[]>(INITIAL_MILESTONES)
   const [panelOpen, setPanelOpen] = useState(false)
+  const [overBudget, setOverBudget] = useState(false)
+
+  const activeActualSpend = overBudget ? OB_ACTUAL_SPEND : ACTUAL_SPEND
+  const activeSpendPct    = overBudget ? OB_SPEND_PCT    : SPEND_PCT
+  const activeCostDist    = overBudget ? OB_COST_DIST    : JOB.costDistribution
 
   const toggleMilestone = (id: string) => {
     setMilestones(prev =>
@@ -1221,6 +1290,18 @@ export default function JobDetailPage({ iteration }: { iteration: Iteration }) {
 
   return (
     <div className="prism-page">
+      {/* Simulation toolbar */}
+      <div className="sim-toolbar">
+        <ModusWcIcon name="labs" size="sm" decorative />
+        <span className="sim-toolbar-label">Simulate</span>
+        <ModusWcSwitch
+          label="Over Budget"
+          checked={overBudget}
+          size="sm"
+          onInputChange={(e) => setOverBudget((e as CustomEvent).detail as boolean)}
+        />
+      </div>
+
       {/* Job Header */}
       <div className="job-header">
         <ModusWcTypography hierarchy="h1" size="xl" weight="bold" label={JOB.name} />
@@ -1252,17 +1333,20 @@ export default function JobDetailPage({ iteration }: { iteration: Iteration }) {
         </div>
 
         <div style={{ marginBottom: '0.75rem' }}>
-          <ModusWcTypography
-            hierarchy="p"
-            size="xs"
-            label="Budget Consumed"
-            customClass="text-[var(--modus-wc-color-base-content-low-contrast)]"
-          />
-          <div style={{ marginTop: '6px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+            <ModusWcTypography
+              hierarchy="p"
+              size="xs"
+              label="Budget Consumed"
+              customClass="text-[var(--modus-wc-color-base-content-low-contrast)]"
+            />
+            <span className="budget-bar-pct">{activeSpendPct.toFixed(1)}% spent</span>
+          </div>
+          <div>
             {iteration >= 3 ? (
               <DualAxisBudgetBar
-                spendPct={SPEND_PCT}
-                actualSpend={ACTUAL_SPEND}
+                spendPct={activeSpendPct}
+                actualSpend={activeActualSpend}
                 milestones={milestones}
                 onToggleMilestone={toggleMilestone}
                 timePct={TIME_PCT}
@@ -1271,13 +1355,13 @@ export default function JobDetailPage({ iteration }: { iteration: Iteration }) {
                 showInsight={iteration === 4}
                 showScheduleMilestones={iteration < 5}
                 showScheduleBar={iteration < 5}
-                showHealthLabel={iteration < 5}
+                showHealthLabel={false}
                 showAxisLabels={iteration < 5}
               />
             ) : (
               <BudgetBar
-                spendPct={SPEND_PCT}
-                actualSpend={ACTUAL_SPEND}
+                spendPct={activeSpendPct}
+                actualSpend={activeActualSpend}
                 milestones={milestones}
                 onToggleMilestone={toggleMilestone}
                 showMilestones={iteration >= 2}
@@ -1295,7 +1379,8 @@ export default function JobDetailPage({ iteration }: { iteration: Iteration }) {
               <JobStatCards
                 milestones={milestones}
                 timePct={TIME_PCT}
-                spendPct={SPEND_PCT}
+                spendPct={activeSpendPct}
+                actualSpend={activeActualSpend}
                 onManage={() => setPanelOpen(true)}
               />
             )}
@@ -1318,7 +1403,7 @@ export default function JobDetailPage({ iteration }: { iteration: Iteration }) {
       </div>
 
       {/* Tab content */}
-      {activeTab === 'overview' && <OverviewTab iteration={iteration} />}
+      {activeTab === 'overview' && <OverviewTab iteration={iteration} costDistribution={activeCostDist} />}
       {activeTab === 'transactions' && <TransactionsTab />}
       {activeTab === 'contract' && <ContractTab />}
 

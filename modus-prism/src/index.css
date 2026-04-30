@@ -395,6 +395,12 @@ modus-wc-tabs button[role='tab'] {
   letter-spacing: 0.01em;
 }
 
+.budget-bar-pct {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--modus-wc-color-base-content-low-contrast);
+}
+
 /* Track — overflow visible so ticks poke through */
 .budget-bar-track-wrap {
   position: relative;
@@ -779,12 +785,36 @@ modus-wc-tabs button[role='tab'] {
   flex-shrink: 0;
 }
 
+/* ── Simulation toolbar ──────────────────────────────────────────────────── */
+
+.sim-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  margin-bottom: 14px;
+  background: var(--modus-wc-color-base-100);
+  border: 1px dashed var(--modus-wc-color-base-300);
+  border-radius: 6px;
+  width: fit-content;
+}
+
+.sim-toolbar-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--modus-wc-color-base-content-low-contrast);
+}
+
 /* ── Job stat cards (iteration 5+) ──────────────────────────────────────── */
 
 .job-stat-cards {
   display: flex;
-  gap: 10px;
+  gap: 0;
   margin-top: 14px;
+  background: var(--modus-wc-color-base-100);
+  border-radius: 6px;
 }
 
 .job-stat-card {
@@ -793,9 +823,17 @@ modus-wc-tabs button[role='tab'] {
   display: flex;
   flex-direction: column;
   gap: 0;
-  background: var(--modus-wc-color-base-100);
-  border-radius: 6px;
   padding: 12px 14px;
+  border-right: 1px solid var(--modus-wc-color-base-200);
+}
+
+.job-stat-card:first-child {
+  border-radius: 6px 0 0 6px;
+}
+
+.job-stat-card:last-child {
+  border-right: none;
+  border-radius: 0 6px 6px 0;
 }
 
 .job-stat-card-label {
@@ -837,5 +875,59 @@ modus-wc-tabs button[role='tab'] {
   border-radius: 6px;
   margin-top: 10px;
   color: var(--modus-wc-color-secondary, #7c5cbf);
+}
+
+.variance-info-btn {
+  display: inline-flex;
+  align-items: center;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--modus-wc-color-base-content-low-contrast);
+  line-height: 1;
+}
+
+.variance-info-btn:hover {
+  color: var(--modus-wc-color-base-content);
+}
+
+.variance-popover {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: var(--modus-wc-color-base-page);
+  border: 1px solid var(--modus-wc-color-base-200);
+  border-radius: 6px;
+  padding: 10px 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.variance-popover-formula {
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-family: monospace;
+  color: var(--modus-wc-color-base-content);
+  margin: 0;
+  padding: 4px 6px;
+  background: var(--modus-wc-color-base-100);
+  border-radius: 4px;
+}
+
+.variance-popover-body {
+  font-size: 0.7rem;
+  color: var(--modus-wc-color-base-content-low-contrast);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.variance-popover-legend {
+  font-size: 0.7rem;
+  color: var(--modus-wc-color-base-content);
 }
 
