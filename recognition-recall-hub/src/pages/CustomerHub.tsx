@@ -155,30 +155,41 @@ const TYPE_COLOR: Record<CustomerType, 'primary' | 'secondary' | 'success' | 'wa
   Owner: 'warning',
 }
 
-const JOB_STATUS_COLOR: Record<string, 'success' | 'warning' | 'secondary' | 'primary'> = {
+const STATUS_COLOR: Record<CustomerStatus, 'success' | 'warning'> = {
   Active: 'success',
-  'On Hold': 'warning',
-  Completed: 'secondary',
-  Pending: 'primary',
-}
-
-function fmt(n: number) {
-  return n >= 1_000_000
-    ? `$${(n / 1_000_000).toFixed(1)}M`
-    : `$${(n / 1_000).toFixed(0)}K`
+  Draft: 'warning',
 }
 
 type CustTab = 'All' | 'Active' | 'Draft'
 const CUST_TABS: CustTab[] = ['All', 'Active', 'Draft']
 
-export default function CustomerHub() {
-  const [activeTab, setActiveTab] = useState<CustTab>('All')
-  const [selectedId, setSelectedId] = useState<string>(CUSTOMERS[0].id)
+const TYPES: Array<CustomerType | 'All'> = [
+  'All', 'General Contractor', 'Government', 'Developer', 'Owner',
+]
 
-  const visibleCustomers = CUSTOMERS.filter(
-    (c) => activeTab === 'All' || c.status === activeTab
-  )
-  const customer = CUSTOMERS.find((c) => c.id === selectedId) ?? CUSTOMERS[0]
+function fmt(n: number) {
+  return n >= 1_000_000
+    ? `$${(n / 1_000_000).toFixed(1)}M`
+    : n >= 1_000
+    ? `$${(n / 1_000).toFixed(0)}K`
+    : `$${n}`
+}
+
+export default function CustomerHub() {
+  const [activeTab, setActiveTab]   = useState<CustTab>('All')
+  const [activeType, setActiveType] = useState<CustomerType | 'All'>('All')
+  const [search, setSearch]         = useState('')
+
+  const filtered = CUSTOMERS.filter((c) => {
+    const matchesTab  = activeTab === 'All' || c.status === activeTab
+    const matchesType = activeType === 'All' || c.type === activeType
+    const matchesSearch =
+      !search ||
+      c.name.toLowerCase().includes(search.toLowerCase()) ||
+      c.contact.toLowerCase().includes(search.toLowerCase()) ||
+      c.city.toLowerCase().includes(search.toLowerCase())
+    return matchesTab && matchesType && matchesSearch
+  })
 
   const tabCount: Record<CustTab, number> = {
     All: CUSTOMERS.length,
@@ -186,174 +197,190 @@ export default function CustomerHub() {
     Draft: CUSTOMERS.filter((c) => c.status === 'Draft').length,
   }
 
-  const collectionRate = customer.ytdBilled > 0
-    ? Math.round((customer.ytdBilled / customer.totalContractValue) * 100)
-    : 0
+  const activeCustomers   = CUSTOMERS.filter((c) => c.status === 'Active')
+  const totalContractVal  = activeCustomers.reduce((s, c) => s + c.totalContractValue, 0)
+  const totalYtdBilled    = activeCustomers.reduce((s, c) => s + c.ytdBilled, 0)
+  const totalActiveJobs   = activeCustomers.reduce((s, c) => s + c.activeJobs, 0)
 
   return (
-    <div className="hub-page" style={{ height: '100%', boxSizing: 'border-box' }}>
+    <div className="hub-page">
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <h1 className="hub-title">
-          <ModusWcIcon name="contacts" size="md" decorative />
-          Customers
-        </h1>
-        <span className="text-muted">{visibleCustomers.length} of {CUSTOMERS.length} customers</span>
+      <h1 className="hub-title">
+        <ModusWcIcon name="contacts" size="md" decorative />
+        Customers
+      </h1>
+
+      {/* KPI row */}
+      <div className="kpi-row">
+        <div className="kpi-card">
+          <span className="kpi-label">Total Customers</span>
+          <span className="kpi-value">{CUSTOMERS.length}</span>
+          <span className="kpi-sub">{activeCustomers.length} active</span>
+        </div>
+        <div className="kpi-card">
+          <span className="kpi-label">Total Contract Value</span>
+          <span className="kpi-value">${(totalContractVal / 1_000_000).toFixed(1)}M</span>
+          <span className="kpi-sub">Across active customers</span>
+        </div>
+        <div className="kpi-card">
+          <span className="kpi-label">Billed YTD</span>
+          <span className="kpi-value kpi-value--success">${(totalYtdBilled / 1_000_000).toFixed(1)}M</span>
+          <span className="kpi-sub">{Math.round((totalYtdBilled / totalContractVal) * 100)}% of contract</span>
+        </div>
+        <div className="kpi-card">
+          <span className="kpi-label">Active Jobs</span>
+          <span className="kpi-value kpi-value--primary">{totalActiveJobs}</span>
+          <span className="kpi-sub">Across all customers</span>
+        </div>
       </div>
 
-      {/* List + Detail */}
-      <div className="list-detail" style={{ flex: 1, minHeight: 0 }}>
-        {/* Customer list */}
-        <div className="list-panel" style={{ padding: 0, display: 'flex', flexDirection: 'column' }}>
-          {/* Tabs */}
-          <div className="tab-bar" style={{ flexShrink: 0 }}>
-            {CUST_TABS.map((tab) => (
-              <button
-                key={tab}
-                className={`tab-btn${activeTab === tab ? ' tab-btn--active' : ''}`}
-                onClick={() => setActiveTab(tab)}
-              >
-                {tab}
-                <span className={`tab-count${activeTab === tab ? ' tab-count--active' : ''}`}>
-                  {tabCount[tab]}
-                </span>
-              </button>
-            ))}
-          </div>
-          <div style={{ overflowY: 'auto', flex: 1 }}>
-          {visibleCustomers.map((c) => (
-            <div
-              key={c.id}
-              className={`list-item${c.id === selectedId ? ' list-item--selected' : ''}`}
-              onClick={() => setSelectedId(c.id)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && setSelectedId(c.id)}
+      {/* Status tabs */}
+      <div className="tab-bar">
+        {CUST_TABS.map((tab) => (
+          <button
+            key={tab}
+            className={`tab-btn${activeTab === tab ? ' tab-btn--active' : ''}`}
+            onClick={() => setActiveTab(tab)}
+          >
+            {tab}
+            <span className={`tab-count${activeTab === tab ? ' tab-count--active' : ''}`}>
+              {tabCount[tab]}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Search + type filter pills */}
+      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+        <div style={{ position: 'relative', flex: '0 0 260px' }}>
+          <span style={{
+            position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)',
+            color: 'var(--modus-wc-color-base-content-low-contrast)', display: 'flex', pointerEvents: 'none',
+          }}>
+            <ModusWcIcon name="search" size="sm" decorative />
+          </span>
+          <input
+            type="text"
+            placeholder="Search customers…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{
+              width: '100%', boxSizing: 'border-box',
+              padding: '0.5rem 0.75rem 0.5rem 2rem',
+              border: '1px solid var(--modus-wc-color-base-200)', borderRadius: 6,
+              fontFamily: 'Open Sans, sans-serif', fontSize: '0.875rem',
+              background: 'var(--modus-wc-color-base-100)', color: 'var(--modus-wc-color-base-content)',
+              outline: 'none',
+            }}
+          />
+        </div>
+
+        {/* Type pills */}
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {TYPES.map((t) => (
+            <button
+              key={t}
+              onClick={() => setActiveType(t)}
+              style={{
+                padding: '4px 12px', borderRadius: 99,
+                border: activeType === t
+                  ? '1px solid var(--modus-wc-color-primary)'
+                  : '1px solid var(--modus-wc-color-base-200)',
+                background: activeType === t ? 'var(--modus-wc-color-primary)' : 'var(--modus-wc-color-base-100)',
+                color: activeType === t ? '#fff' : 'var(--modus-wc-color-base-content)',
+                fontFamily: 'Open Sans, sans-serif', fontSize: '0.75rem',
+                fontWeight: activeType === t ? 600 : 400,
+                cursor: 'pointer', transition: 'all 0.15s',
+              }}
             >
-              <div className="list-item-row">
-                <span className="list-item-title">{c.name}</span>
-                <div style={{ display: 'flex', gap: 4, flexShrink: 0 }}>
-                  {c.status === 'Draft' && <ModusWcBadge color="secondary" size="sm" text="Draft" />}
+              {t}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Customer card grid */}
+      {filtered.length > 0 ? (
+        <div className="card-grid">
+          {filtered.map((c) => (
+            <div key={c.id} className="vendor-card">
+              {/* Card header */}
+              <div className="vendor-card-header">
+                <div style={{ minWidth: 0 }}>
+                  <div className="vendor-card-name">{c.name}</div>
+                  <div className="vendor-card-specialty">{c.city}</div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
                   <ModusWcBadge color={TYPE_COLOR[c.type]} size="sm" text={c.type} />
+                  {c.status === 'Draft' && <ModusWcBadge color={STATUS_COLOR[c.status]} size="sm" text="Draft" />}
                 </div>
               </div>
-              <span className="list-item-sub">{c.contact} · {c.city}</span>
-              <div className="list-item-row" style={{ marginTop: 4 }}>
-                <span className="text-muted">
-                  {c.activeJobs > 0 ? `${c.activeJobs} active job${c.activeJobs !== 1 ? 's' : ''}` : 'No active jobs'}
-                </span>
-                <span className="text-strong text-body">{c.totalContractValue > 0 ? fmt(c.totalContractValue) : '—'}</span>
+
+              {/* Contact info */}
+              <div className="vendor-card-meta">
+                <div className="vendor-card-row">
+                  <ModusWcIcon name="person" size="sm" decorative />
+                  {c.contact} · {c.title}
+                </div>
+                <div className="vendor-card-row">
+                  <ModusWcIcon name="email" size="sm" decorative />
+                  {c.email}
+                </div>
+                <div className="vendor-card-row">
+                  <ModusWcIcon name="phone" size="sm" decorative />
+                  {c.phone}
+                </div>
               </div>
+
+              {/* Stats row */}
+              <div style={{
+                display: 'flex', gap: '1rem', paddingTop: '0.5rem',
+                borderTop: '1px solid var(--modus-wc-color-base-200)',
+              }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <span className="kpi-label">Active Jobs</span>
+                  <span className="text-body text-strong">{c.activeJobs}</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <span className="kpi-label">Contract Value</span>
+                  <span className="text-body text-strong">{c.totalContractValue > 0 ? fmt(c.totalContractValue) : '—'}</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <span className="kpi-label">Billed YTD</span>
+                  <span className="text-body text-strong">{c.ytdBilled > 0 ? fmt(c.ytdBilled) : '—'}</span>
+                </div>
+              </div>
+
+              {/* Jobs list (if any) */}
+              {c.jobs.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, paddingTop: '0.25rem' }}>
+                  <span className="kpi-label">Jobs</span>
+                  {c.jobs.map((job) => (
+                    <div key={job.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6 }}>
+                      <span style={{
+                        fontSize: '0.72rem', color: 'var(--modus-wc-color-base-content)',
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>
+                        {job.name}
+                      </span>
+                      <ModusWcBadge
+                        color={job.status === 'Active' ? 'success' : job.status === 'On Hold' ? 'warning' : 'secondary'}
+                        size="sm"
+                        text={job.status}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
-          </div>
         </div>
-
-        {/* Customer detail */}
-        <div className="detail-panel">
-          {/* Contact card */}
-          <div className="section-card">
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-              <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                  <ModusWcBadge color={TYPE_COLOR[customer.type]} size="sm" text={customer.type} />
-                  <span className="text-muted">{customer.id}</span>
-                </div>
-                <h2 style={{ margin: 0, fontSize: '1.125rem', fontWeight: 700, color: 'var(--modus-wc-color-base-content)' }}>
-                  {customer.name}
-                </h2>
-                <p style={{ margin: '4px 0 0', fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>
-                  {customer.city}
-                </p>
-              </div>
-            </div>
-
-            {/* Contact info */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 4 }}>
-              <p className="section-card-title">
-                <ModusWcIcon name="person" size="sm" decorative />
-                Primary Contact
-              </p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
-                {[
-                  { label: 'Name', value: customer.contact },
-                  { label: 'Title', value: customer.title },
-                  { label: 'Email', value: customer.email },
-                  { label: 'Phone', value: customer.phone },
-                ].map(({ label, value }) => (
-                  <div key={label} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <span className="kpi-label">{label}</span>
-                    <span className="text-body">{value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* KPIs */}
-          <div className="kpi-row">
-            <div className="kpi-card">
-              <span className="kpi-label">Total Contract Value</span>
-              <span className="kpi-value">{fmt(customer.totalContractValue)}</span>
-              <span className="kpi-sub">{customer.jobs.length} total job{customer.jobs.length !== 1 ? 's' : ''}</span>
-            </div>
-            <div className="kpi-card">
-              <span className="kpi-label">Billed YTD</span>
-              <span className="kpi-value kpi-value--primary">{fmt(customer.ytdBilled)}</span>
-              <span className="kpi-sub">{collectionRate}% of total</span>
-            </div>
-            <div className="kpi-card">
-              <span className="kpi-label">Active Jobs</span>
-              <span className={`kpi-value${customer.activeJobs === 0 ? ' kpi-value--warning' : ''}`}>
-                {customer.activeJobs}
-              </span>
-              <span className="kpi-sub">
-                {customer.jobs.filter((j) => j.status === 'Completed').length} completed
-              </span>
-            </div>
-          </div>
-
-          {/* Linked jobs */}
-          <div className="section-card" style={{ padding: 0, overflow: 'hidden' }}>
-            <p className="section-card-title" style={{ padding: '0.75rem 1rem 0' }}>
-              <ModusWcIcon name="assignment" size="sm" decorative />
-              Jobs
-            </p>
-            <div style={{ overflowX: 'auto' }}>
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>Job ID</th>
-                    <th>Name</th>
-                    <th style={{ textAlign: 'right' }}>Contract Value</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {customer.jobs.map((job) => (
-                    <tr key={job.id}>
-                      <td><span className="text-muted">{job.id}</span></td>
-                      <td>
-                        <span style={{ fontSize: '0.8125rem', fontWeight: 500, color: 'var(--modus-wc-color-base-content)' }}>
-                          {job.name}
-                        </span>
-                      </td>
-                      <td className="amount">{fmt(job.contractValue)}</td>
-                      <td>
-                        <ModusWcBadge
-                          color={JOB_STATUS_COLOR[job.status] ?? 'secondary'}
-                          size="sm"
-                          text={job.status}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+      ) : (
+        <div className="empty-state">
+          <ModusWcIcon name="contacts" size="lg" decorative />
+          <span>No customers match your search</span>
         </div>
-      </div>
+      )}
     </div>
   )
 }

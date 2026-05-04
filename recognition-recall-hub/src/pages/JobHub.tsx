@@ -126,7 +126,7 @@ const STATUS_COLOR: Record<HubJob['status'], 'success' | 'warning' | 'secondary'
 }
 
 type JobTab = 'All' | 'Active' | 'On Hold' | 'Completed' | 'Draft'
-const JOB_TABS: JobTab[] = ['All', 'Active', 'On Hold', 'Draft', 'Completed']
+const JOB_TABS: JobTab[] = ['Active', 'On Hold', 'Draft', 'Completed', 'All']
 
 type SortKey = 'name' | 'contractValue' | 'spentPct'
 type SortDir  = 'asc' | 'desc'
@@ -239,7 +239,7 @@ export default function JobHub() {
   const [sortKey, setSortKey]       = useState<SortKey>('name')
   const [sortDir, setSortDir]       = useState<SortDir>('asc')
   const [filterOpen, setFilterOpen] = useState(false)
-  const [activeTab, setActiveTab]   = useState<JobTab>('All')
+  const [activeTab, setActiveTab]   = useState<JobTab>('Active')
 
   const selectedJob = JOBS.find((j) => j.id === selectedId) ?? null
 
@@ -292,6 +292,14 @@ export default function JobHub() {
   }
 
   // ── Grid view ─────────────────────────────────────────────────────────────
+  const activeJobs       = JOBS.filter((j) => j.status === 'Active')
+  const totalContract    = activeJobs.reduce((s, j) => s + j.contractValue, 0)
+  const totalCostToDate  = activeJobs.reduce((s, j) => s + j.costToDate, 0)
+  const totalBilled      = activeJobs.reduce((s, j) => s + j.billedToDate, 0)
+  const totalCollections = activeJobs.reduce((s, j) => s + j.collections, 0)
+  const atRiskCount      = activeJobs.filter((j) => j.spentPct >= 75).length
+  const overBudgetCount  = activeJobs.filter((j) => j.spentPct >= 90).length
+
   return (
     <div className="hub-page">
       {/* Header */}
@@ -301,6 +309,36 @@ export default function JobHub() {
           Jobs
         </h1>
         <span className="text-muted">{filtered.length} of {JOBS.length} jobs</span>
+      </div>
+
+      {/* KPI summary */}
+      <div className="kpi-row">
+        <div className="kpi-card">
+          <span className="kpi-label">Active Contract Value</span>
+          <span className="kpi-value">${(totalContract / 1_000_000).toFixed(1)}M</span>
+          <span className="kpi-sub">{activeJobs.length} active jobs</span>
+        </div>
+        <div className="kpi-card">
+          <span className="kpi-label">Cost to Date</span>
+          <span className="kpi-value">${(totalCostToDate / 1_000_000).toFixed(1)}M</span>
+          <span className="kpi-sub">{Math.round((totalCostToDate / totalContract) * 100)}% of contract</span>
+        </div>
+        <div className="kpi-card">
+          <span className="kpi-label">Billed to Date</span>
+          <span className="kpi-value kpi-value--success">${(totalBilled / 1_000_000).toFixed(1)}M</span>
+          <span className="kpi-sub">${(totalCollections / 1_000_000).toFixed(1)}M collected</span>
+        </div>
+        <div className="kpi-card">
+          <span className="kpi-label">Budget Health</span>
+          <span className={`kpi-value${overBudgetCount > 0 ? ' kpi-value--danger' : atRiskCount > 0 ? ' kpi-value--warning' : ' kpi-value--success'}`}>
+            {overBudgetCount > 0
+              ? `${overBudgetCount} over budget`
+              : atRiskCount > 0
+              ? `${atRiskCount} at risk`
+              : 'All on track'}
+          </span>
+          <span className="kpi-sub">{atRiskCount} job{atRiskCount !== 1 ? 's' : ''} ≥75% spent</span>
+        </div>
       </div>
 
       {/* Status tabs */}

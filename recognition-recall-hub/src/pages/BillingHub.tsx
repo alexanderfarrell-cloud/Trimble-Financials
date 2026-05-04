@@ -124,27 +124,37 @@ const STATUS_STRIP: Record<InvoiceStatus, string> = {
   Draft:    'var(--modus-wc-color-base-300, #b0b8c1)',
 }
 
-function getCustomerTotals(invoices: Invoice[]): { customer: string; total: number; count: number }[] {
-  const map: Record<string, { total: number; count: number }> = {}
-  for (const inv of invoices) {
-    if (!map[inv.customer]) map[inv.customer] = { total: 0, count: 0 }
-    map[inv.customer].total += inv.amount
-    map[inv.customer].count += 1
-  }
-  return Object.entries(map)
-    .map(([customer, { total, count }]) => ({ customer, total, count }))
-    .sort((a, b) => b.total - a.total)
+interface InvoiceGroup {
+  jobId: string
+  jobName: string
+  customer: string
+  invoices: Invoice[]
+  total: number
 }
+
+function groupByJob(invoices: Invoice[]): InvoiceGroup[] {
+  const map = new Map<string, InvoiceGroup>()
+  for (const inv of invoices) {
+    if (!map.has(inv.jobId)) {
+      map.set(inv.jobId, { jobId: inv.jobId, jobName: inv.jobName, customer: inv.customer, invoices: [], total: 0 })
+    }
+    const g = map.get(inv.jobId)!
+    g.invoices.push(inv)
+    g.total += inv.amount
+  }
+  return Array.from(map.values())
+}
+
+type ListMode = 'grouped' | 'flat'
 
 export default function BillingHub() {
   const [activeTab, setActiveTab] = useState<Tab>('All')
   const [search, setSearch] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('due-desc')
-  const [customerFilter, setCustomerFilter] = useState<string | 'All'>('All')
+  const [listMode, setListMode] = useState<ListMode>('grouped')
 
   const filtered = INVOICES
     .filter(TAB_FILTER[activeTab])
-    .filter((i) => customerFilter === 'All' || i.customer === customerFilter)
     .filter((i) => {
       const q = search.trim().toLowerCase()
       if (!q) return true
@@ -167,14 +177,13 @@ export default function BillingHub() {
       }
     })
 
+  const groups = groupByJob(filtered)
+
   const totalBilled = INVOICES.reduce((s, i) => s + i.amount, 0)
   const outstanding = INVOICES.filter((i) => ['Overdue', 'Pending', 'Approved'].includes(i.status))
     .reduce((s, i) => s + i.amount, 0)
   const overdue = INVOICES.filter((i) => i.status === 'Overdue').reduce((s, i) => s + i.amount, 0)
   const paid = INVOICES.filter((i) => i.status === 'Paid').reduce((s, i) => s + i.amount, 0)
-
-  const customerTotals = getCustomerTotals(INVOICES)
-  const maxCustomerTotal = Math.max(...customerTotals.map((c) => c.total))
 
   const tabCount: Record<Tab, number> = {
     All: INVOICES.length,
@@ -222,132 +231,177 @@ export default function BillingHub() {
         </div>
       </div>
 
-      {/* Sidebar + invoice list */}
-      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-
-        {/* Customer breakdown sidebar — click to filter */}
-        <div className="section-card" style={{ minWidth: 220, flex: '0 0 220px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-            <p className="section-card-title" style={{ margin: 0 }}>By Customer</p>
-            {customerFilter !== 'All' && (
-              <button
-                onClick={() => setCustomerFilter('All')}
-                style={{
-                  background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px',
-                  fontSize: '0.7rem', color: 'var(--modus-wc-color-primary)', fontFamily: 'inherit',
-                }}
-                aria-label="Clear customer filter"
-              >
-                Clear
-              </button>
-            )}
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {customerTotals.map(({ customer, total, count }) => {
-              const isActive = customerFilter === customer
-              const pct = Math.round((total / totalBilled) * 100)
-              return (
-                <button
-                  key={customer}
-                  onClick={() => setCustomerFilter(isActive ? 'All' : customer)}
-                  style={{
-                    display: 'flex', flexDirection: 'column', gap: 4,
-                    background: isActive ? 'var(--modus-wc-color-base-100)' : 'none',
-                    border: isActive ? '1px solid var(--modus-wc-color-primary)' : '1px solid transparent',
-                    borderRadius: 6, padding: '4px 6px', cursor: 'pointer', textAlign: 'left',
-                    fontFamily: 'inherit',
-                  }}
-                  aria-pressed={isActive}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--modus-wc-color-base-content)', lineHeight: 1.3 }}>
-                      {customer}
-                    </span>
-                    <span className="text-muted">{pct}%</span>
-                  </div>
-                  <div className="prog-track" style={{ height: 8, borderRadius: 4 }}>
-                    <div
-                      style={{
-                        height: '100%', borderRadius: 4,
-                        width: `${Math.round((total / maxCustomerTotal) * 100)}%`,
-                        background: 'var(--modus-wc-color-primary)',
-                        opacity: customerFilter !== 'All' && !isActive ? 0.35 : 1,
-                      }}
-                    />
-                  </div>
-                  <span className="text-muted">{fmt(total)} · {count} inv.</span>
-                </button>
-              )
-            })}
-          </div>
+      {/* Invoice list panel */}
+      <div className="section-card" style={{ padding: 0, overflow: 'hidden' }}>
+        {/* Tabs */}
+        <div className="tab-bar">
+          {TABS.map((tab) => (
+            <button
+              key={tab}
+              className={`tab-btn${activeTab === tab ? ' tab-btn--active' : ''}`}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab}
+              <span className={`tab-count${activeTab === tab ? ' tab-count--active' : ''}`}>
+                {tabCount[tab]}
+              </span>
+            </button>
+          ))}
         </div>
 
-        {/* Invoice list panel */}
-        <div className="section-card" style={{ flex: 1, minWidth: 0, padding: 0, overflow: 'hidden' }}>
-          {/* Tabs */}
-          <div className="tab-bar">
-            {TABS.map((tab) => (
+        {/* Search + sort toolbar */}
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '0.5rem',
+          padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--modus-wc-color-base-200)',
+        }}>
+          <div style={{ position: 'relative', flex: 1 }}>
+            <ModusWcIcon
+              name="search"
+              size="xs"
+              decorative
+              style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--modus-wc-color-base-content-low-contrast)', pointerEvents: 'none' } as React.CSSProperties}
+            />
+            <input
+              type="text"
+              placeholder="Search job, customer, or invoice ID…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{
+                width: '100%', boxSizing: 'border-box',
+                paddingLeft: 28, paddingRight: 8, paddingTop: 5, paddingBottom: 5,
+                fontSize: '0.8125rem', border: '1px solid var(--modus-wc-color-base-300)',
+                borderRadius: 4, background: 'var(--modus-wc-color-base-page)',
+                color: 'var(--modus-wc-color-base-content)', fontFamily: 'inherit', outline: 'none',
+              }}
+            />
+          </div>
+          <select
+            value={sortKey}
+            onChange={(e) => setSortKey(e.target.value as SortKey)}
+            aria-label="Sort invoices"
+            style={{
+              fontSize: '0.8125rem', padding: '5px 8px', border: '1px solid var(--modus-wc-color-base-300)',
+              borderRadius: 4, background: 'var(--modus-wc-color-base-page)',
+              color: 'var(--modus-wc-color-base-content)', fontFamily: 'inherit', cursor: 'pointer', flexShrink: 0,
+            }}
+          >
+            <option value="due-desc">Due date (newest)</option>
+            <option value="due-asc">Due date (oldest)</option>
+            <option value="issued-desc">Issued (newest)</option>
+            <option value="amount-desc">Amount (high–low)</option>
+            <option value="amount-asc">Amount (low–high)</option>
+            <option value="job-az">Job (A–Z)</option>
+            <option value="customer-az">Customer (A–Z)</option>
+          </select>
+
+          {/* Grouped / Flat toggle */}
+          <div style={{
+            display: 'flex', borderRadius: 6, overflow: 'hidden',
+            border: '1px solid var(--modus-wc-color-base-300)', flexShrink: 0,
+          }}>
+            {(['grouped', 'flat'] as ListMode[]).map((mode) => (
               <button
-                key={tab}
-                className={`tab-btn${activeTab === tab ? ' tab-btn--active' : ''}`}
-                onClick={() => setActiveTab(tab)}
+                key={mode}
+                onClick={() => setListMode(mode)}
+                aria-pressed={listMode === mode}
+                title={mode === 'grouped' ? 'Group by project' : 'Flat list'}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  padding: '5px 8px', border: 'none', cursor: 'pointer',
+                  background: listMode === mode ? 'var(--modus-wc-color-primary)' : 'var(--modus-wc-color-base-page)',
+                  color: listMode === mode ? '#fff' : 'var(--modus-wc-color-base-content-low-contrast)',
+                  transition: 'background 0.15s',
+                }}
               >
-                {tab}
-                <span className={`tab-count${activeTab === tab ? ' tab-count--active' : ''}`}>
-                  {tabCount[tab]}
-                </span>
+                <ModusWcIcon
+                  name={mode === 'grouped' ? 'list' : 'format_list_bulleted'}
+                  size="xs"
+                  decorative
+                />
               </button>
             ))}
           </div>
+        </div>
 
-          {/* Search + sort toolbar */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '0.5rem',
-            padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--modus-wc-color-base-200)',
-          }}>
-            <div style={{ position: 'relative', flex: 1 }}>
-              <ModusWcIcon
-                name="search"
-                size="xs"
-                decorative
-                style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--modus-wc-color-base-content-low-contrast)', pointerEvents: 'none' } as React.CSSProperties}
-              />
-              <input
-                type="text"
-                placeholder="Search job, customer, or invoice ID…"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                style={{
-                  width: '100%', boxSizing: 'border-box',
-                  paddingLeft: 28, paddingRight: 8, paddingTop: 5, paddingBottom: 5,
-                  fontSize: '0.8125rem', border: '1px solid var(--modus-wc-color-base-300)',
-                  borderRadius: 4, background: 'var(--modus-wc-color-base-page)',
-                  color: 'var(--modus-wc-color-base-content)', fontFamily: 'inherit', outline: 'none',
-                }}
-              />
-            </div>
-            <select
-              value={sortKey}
-              onChange={(e) => setSortKey(e.target.value as SortKey)}
-              aria-label="Sort invoices"
-              style={{
-                fontSize: '0.8125rem', padding: '5px 8px', border: '1px solid var(--modus-wc-color-base-300)',
-                borderRadius: 4, background: 'var(--modus-wc-color-base-page)',
-                color: 'var(--modus-wc-color-base-content)', fontFamily: 'inherit', cursor: 'pointer', flexShrink: 0,
-              }}
-            >
-              <option value="due-desc">Due date (newest)</option>
-              <option value="due-asc">Due date (oldest)</option>
-              <option value="issued-desc">Issued (newest)</option>
-              <option value="amount-desc">Amount (high–low)</option>
-              <option value="amount-asc">Amount (low–high)</option>
-              <option value="job-az">Job (A–Z)</option>
-              <option value="customer-az">Customer (A–Z)</option>
-            </select>
+        {/* Grouped view */}
+        {listMode === 'grouped' && (
+          <div style={{ display: 'flex', flexDirection: 'column', padding: '0.5rem', gap: '1rem' }}>
+            {groups.length === 0 && (
+              <div className="empty-state">
+                <ModusWcIcon name="receipt" size="lg" decorative />
+                <span>{search ? 'No invoices match your search' : 'No invoices in this category'}</span>
+              </div>
+            )}
+            {groups.map((group) => (
+              <div key={group.jobId}>
+                <div style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: '0.375rem 0.75rem', marginBottom: '0.375rem',
+                  borderRadius: 6, background: 'var(--modus-wc-color-base-100)',
+                  borderLeft: '3px solid var(--modus-wc-color-primary)',
+                }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--modus-wc-color-base-content)' }}>
+                      {group.jobName}
+                    </span>
+                    <span className="text-muted">{group.customer} · {group.jobId}</span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1, flexShrink: 0 }}>
+                    <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--modus-wc-color-base-content)' }}>
+                      {fmt(group.total)}
+                    </span>
+                    <span className="text-muted">{group.invoices.length} invoice{group.invoices.length !== 1 ? 's' : ''}</span>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', paddingLeft: '0.5rem' }}>
+                  {group.invoices.map((inv) => {
+                    const isOverdue = inv.status === 'Overdue'
+                    return (
+                      <div
+                        key={inv.id}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '0.75rem',
+                          padding: '0.5rem 0.75rem', borderRadius: 6,
+                          border: `1px solid ${isOverdue ? 'var(--modus-wc-color-danger, #da212c)' : 'var(--modus-wc-color-base-200)'}`,
+                          background: 'var(--modus-wc-color-base-page)',
+                        }}
+                      >
+                        <div style={{ width: 4, alignSelf: 'stretch', borderRadius: 2, flexShrink: 0, background: STATUS_STRIP[inv.status] }} />
+                        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                            <span className="text-muted">{inv.id} · Issued {inv.issuedDate}</span>
+                            <span style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--modus-wc-color-base-content)', whiteSpace: 'nowrap', flexShrink: 0 }}>
+                              {fmt(inv.amount)}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
+                            <span style={{
+                              fontSize: '0.75rem', fontWeight: isOverdue ? 700 : 400,
+                              color: isOverdue ? 'var(--modus-wc-color-danger, #da212c)' : 'var(--modus-wc-color-base-content-low-contrast)',
+                            }}>
+                              {isOverdue ? '⚠ ' : ''}Due {inv.dueDate}
+                            </span>
+                            <ModusWcBadge color={STATUS_COLOR[inv.status]} size="sm" text={inv.status} />
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
+        )}
 
-          {/* Invoice list */}
+        {/* Flat list view */}
+        {listMode === 'flat' && (
           <div style={{ display: 'flex', flexDirection: 'column', padding: '0.5rem', gap: '0.5rem' }}>
+            {filtered.length === 0 && (
+              <div className="empty-state">
+                <ModusWcIcon name="receipt" size="lg" decorative />
+                <span>{search ? 'No invoices match your search' : 'No invoices in this category'}</span>
+              </div>
+            )}
             {filtered.map((inv) => {
               const isOverdue = inv.status === 'Overdue'
               return (
@@ -360,10 +414,7 @@ export default function BillingHub() {
                     background: 'var(--modus-wc-color-base-page)',
                   }}
                 >
-                  {/* Status colour strip */}
                   <div style={{ width: 4, alignSelf: 'stretch', borderRadius: 2, flexShrink: 0, background: STATUS_STRIP[inv.status] }} />
-
-                  {/* Main content */}
                   <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
@@ -380,8 +431,7 @@ export default function BillingHub() {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                         <span className="text-muted">{inv.customer}</span>
                         <span style={{
-                          fontSize: '0.75rem',
-                          fontWeight: isOverdue ? 700 : 400,
+                          fontSize: '0.75rem', fontWeight: isOverdue ? 700 : 400,
                           color: isOverdue ? 'var(--modus-wc-color-danger, #da212c)' : 'var(--modus-wc-color-base-content-low-contrast)',
                         }}>
                           {isOverdue ? '⚠ ' : ''}Due {inv.dueDate}
@@ -393,15 +443,8 @@ export default function BillingHub() {
                 </div>
               )
             })}
-
-            {filtered.length === 0 && (
-              <div className="empty-state">
-                <ModusWcIcon name="receipt" size="lg" decorative />
-                <span>{search || customerFilter !== 'All' ? 'No invoices match your filters' : 'No invoices in this category'}</span>
-              </div>
-            )}
           </div>
-        </div>
+        )}
       </div>
     </div>
   )
