@@ -264,8 +264,7 @@ body {
 /* ── Section cards ────────────────────────────────────────────────────────── */
 
 .section-card {
-  background: var(--modus-wc-color-base-100);
-  border: 1px solid var(--modus-wc-color-base-200);
+  background: var(--modus-wc-color-base-page);
   border-radius: 6px;
   padding: 1rem;
   display: flex;
@@ -397,8 +396,7 @@ body {
 .tab-bar {
   display: flex;
   border-bottom: 1px solid var(--modus-wc-color-base-200);
-  background: var(--modus-wc-color-base-100);
-  border-radius: 6px 6px 0 0;
+  background: var(--modus-wc-color-base-page);
   overflow-x: auto;
 }
 

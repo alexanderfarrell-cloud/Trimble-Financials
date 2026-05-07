@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { ModusWcBadge, ModusWcIcon, ModusWcButton } from '@trimble-oss/moduswebcomponents-react'
 import JobDetail, { type HubJob } from './JobDetail'
 
@@ -151,9 +151,29 @@ function progColor(pct: number) {
 
 // ─── Job card ─────────────────────────────────────────────────────────────────
 
+const JOB_MENU_ITEMS = [
+  { label: 'Add Job Billing',     color: 'var(--modus-wc-color-base-content)' },
+  { label: 'Add Job Expenses',    color: 'var(--modus-wc-color-base-content)' },
+  { label: 'Mark as Completed',   color: 'var(--modus-wc-color-success, #006638)' },
+  { label: 'Mark as Cancelled',   color: 'var(--modus-wc-color-danger, #da212c)' },
+]
+
 function JobCard({ job, onClick }: { job: HubJob; onClick: () => void }) {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
   const variance      = job.contractValue - job.projectedCost
   const variancePos   = variance >= 0
+
+  useEffect(() => {
+    if (!menuOpen) return
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [menuOpen])
 
   return (
     <div
@@ -170,7 +190,51 @@ function JobCard({ job, onClick }: { job: HubJob; onClick: () => void }) {
           <div className="vendor-card-name" style={{ marginBottom: 2 }}>{job.name}</div>
           <div className="vendor-card-specialty">{job.customer}</div>
         </div>
-        <ModusWcBadge color={STATUS_COLOR[job.status]} size="sm" text={job.status} />
+        <div ref={menuRef} style={{ position: 'relative', flexShrink: 0 }}>
+          <button
+            aria-label="Card menu"
+            aria-expanded={menuOpen}
+            onClick={(e) => { e.stopPropagation(); setMenuOpen((o) => !o) }}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              padding: '2px 4px', borderRadius: 4, display: 'flex', alignItems: 'center',
+              color: 'var(--modus-wc-color-base-content-low-contrast)',
+            }}
+          >
+            <ModusWcIcon name="menu" size="sm" decorative />
+          </button>
+          {menuOpen && (
+            <div
+              role="menu"
+              style={{
+                position: 'absolute', top: 'calc(100% + 4px)', right: 0,
+                zIndex: 100, background: 'var(--modus-wc-color-base-page)',
+                border: '1px solid var(--modus-wc-color-base-200)',
+                borderRadius: 8, boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
+                padding: '0.375rem 0', minWidth: 200,
+                display: 'flex', flexDirection: 'column',
+              }}
+            >
+              {JOB_MENU_ITEMS.map(({ label, color }) => (
+                <button
+                  key={label}
+                  role="menuitem"
+                  onClick={(e) => { e.stopPropagation(); setMenuOpen(false) }}
+                  style={{
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    padding: '0.55rem 1rem', textAlign: 'left',
+                    fontFamily: 'Open Sans, sans-serif', fontSize: '0.875rem',
+                    color, fontWeight: 400, transition: 'background 0.1s',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--modus-wc-color-base-100)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Meta */}
@@ -308,7 +372,6 @@ export default function JobHub() {
           <ModusWcIcon name="assignment" size="md" decorative />
           Jobs
         </h1>
-        <span className="text-muted">{filtered.length} of {JOBS.length} jobs</span>
       </div>
 
       {/* KPI summary */}
@@ -360,7 +423,7 @@ export default function JobHub() {
       {/* Search + sort toolbar */}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         {/* Search */}
-        <div style={{ position: 'relative', flex: 1, maxWidth: 360 }}>
+        <div style={{ position: 'relative', flex: 1 }}>
           <span style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', display: 'flex', pointerEvents: 'none', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>
             <ModusWcIcon name="search" size="sm" decorative />
           </span>
@@ -377,7 +440,7 @@ export default function JobHub() {
               borderRadius: 6,
               fontFamily: 'Open Sans, sans-serif',
               fontSize: '0.8125rem',
-              background: 'var(--modus-wc-color-base-100)',
+              background: 'var(--modus-wc-color-base-page)',
               color: 'var(--modus-wc-color-base-content)',
               outline: 'none',
             }}

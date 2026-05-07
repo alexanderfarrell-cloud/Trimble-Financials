@@ -9,6 +9,7 @@ import {
   ModusWcIcon,
 } from '@trimble-oss/moduswebcomponents-react'
 import { useMediaQuery } from './hooks/useMediaQuery'
+import DashboardHub from './pages/DashboardHub'
 import JobHub from './pages/JobHub'
 import BillingHub from './pages/BillingHub'
 import CustomerHub from './pages/CustomerHub'
@@ -20,7 +21,8 @@ const SIDENAV_MIN_WIDTH = '4rem'
 const NAVBAR_HEIGHT = 56
 
 const NAV_ITEMS = [
-  { path: '/', label: 'Jobs', icon: 'assignment' },
+  { path: '/', label: 'Dashboard', icon: 'dashboard' },
+  { path: '/jobs', label: 'Jobs', icon: 'assignment' },
   { path: '/billing', label: 'Billing', icon: 'receipt' },
   { path: '/customers', label: 'Customers', icon: 'contacts' },
   { path: '/expenses', label: 'Expenses', icon: 'credit_card' },
@@ -150,7 +152,8 @@ export default function App() {
           {/* Main scrollable area */}
           <main id="main-content">
             <Routes>
-              <Route path="/" element={<JobHub />} />
+              <Route path="/" element={<DashboardHub />} />
+              <Route path="/jobs" element={<JobHub />} />
               <Route path="/billing" element={<BillingHub />} />
               <Route path="/customers" element={<CustomerHub />} />
               <Route path="/expenses" element={<ExpenseHub />} />

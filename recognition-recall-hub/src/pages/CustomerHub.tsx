@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { ModusWcBadge, ModusWcIcon } from '@trimble-oss/moduswebcomponents-react'
 
 type CustomerType = 'General Contractor' | 'Government' | 'Developer' | 'Owner'
@@ -175,6 +175,77 @@ function fmt(n: number) {
     : `$${n}`
 }
 
+const CUSTOMER_MENU_ITEMS = [
+  { label: 'Edit Details',       color: 'var(--modus-wc-color-base-content)' },
+  { label: 'Add Contact',        color: 'var(--modus-wc-color-base-content)' },
+  { label: 'Mark as Active',     color: 'var(--modus-wc-color-success, #006638)' },
+  { label: 'Archive',            color: 'var(--modus-wc-color-danger, #da212c)' },
+]
+
+function CustomerCardMenu({ customerId }: { customerId: string }) {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [menuOpen])
+
+  return (
+    <div ref={menuRef} style={{ position: 'relative', flexShrink: 0 }}>
+      <button
+        aria-label="Card menu"
+        aria-expanded={menuOpen}
+        onClick={() => setMenuOpen((o) => !o)}
+        style={{
+          background: 'none', border: 'none', cursor: 'pointer',
+          padding: '2px 4px', borderRadius: 4, display: 'flex', alignItems: 'center',
+          color: 'var(--modus-wc-color-base-content-low-contrast)',
+        }}
+      >
+        <ModusWcIcon name="menu" size="sm" decorative />
+      </button>
+      {menuOpen && (
+        <div
+          role="menu"
+          style={{
+            position: 'absolute', top: 'calc(100% + 4px)', right: 0,
+            zIndex: 100, background: 'var(--modus-wc-color-base-page)',
+            border: '1px solid var(--modus-wc-color-base-200)',
+            borderRadius: 8, boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
+            padding: '0.375rem 0', minWidth: 200,
+            display: 'flex', flexDirection: 'column',
+          }}
+        >
+          {CUSTOMER_MENU_ITEMS.map(({ label, color }) => (
+            <button
+              key={label}
+              role="menuitem"
+              onClick={() => setMenuOpen(false)}
+              style={{
+                background: 'none', border: 'none', cursor: 'pointer',
+                padding: '0.55rem 1rem', textAlign: 'left',
+                fontFamily: 'Open Sans, sans-serif', fontSize: '0.875rem',
+                color, fontWeight: 400, transition: 'background 0.1s',
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--modus-wc-color-base-100)')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 export default function CustomerHub() {
   const [activeTab, setActiveTab]   = useState<CustTab>('All')
   const [activeType, setActiveType] = useState<CustomerType | 'All'>('All')
@@ -251,8 +322,8 @@ export default function CustomerHub() {
       </div>
 
       {/* Search + type filter pills */}
-      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
-        <div style={{ position: 'relative', flex: '0 0 260px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <div style={{ position: 'relative' }}>
           <span style={{
             position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)',
             color: 'var(--modus-wc-color-base-content-low-contrast)', display: 'flex', pointerEvents: 'none',
@@ -269,14 +340,14 @@ export default function CustomerHub() {
               padding: '0.5rem 0.75rem 0.5rem 2rem',
               border: '1px solid var(--modus-wc-color-base-200)', borderRadius: 6,
               fontFamily: 'Open Sans, sans-serif', fontSize: '0.875rem',
-              background: 'var(--modus-wc-color-base-100)', color: 'var(--modus-wc-color-base-content)',
+              background: 'var(--modus-wc-color-base-page)', color: 'var(--modus-wc-color-base-content)',
               outline: 'none',
             }}
           />
         </div>
 
         {/* Type pills */}
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', paddingTop: '8px', paddingBottom: '8px' }}>
           {TYPES.map((t) => (
             <button
               key={t}
@@ -310,10 +381,7 @@ export default function CustomerHub() {
                   <div className="vendor-card-name">{c.name}</div>
                   <div className="vendor-card-specialty">{c.city}</div>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-                  <ModusWcBadge color={TYPE_COLOR[c.type]} size="sm" text={c.type} />
-                  {c.status === 'Draft' && <ModusWcBadge color={STATUS_COLOR[c.status]} size="sm" text="Draft" />}
-                </div>
+                <CustomerCardMenu customerId={c.id} />
               </div>
 
               {/* Contact info */}

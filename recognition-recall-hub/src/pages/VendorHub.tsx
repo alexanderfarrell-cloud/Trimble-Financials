@@ -287,17 +287,12 @@ export default function VendorHub() {
       </div>
 
       {/* Search + filter */}
-      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
-        {/* Search input */}
-        <div style={{ position: 'relative', flex: '0 0 260px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        {/* Search input — full width */}
+        <div style={{ position: 'relative' }}>
           <span style={{
-            position: 'absolute',
-            left: 8,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            color: 'var(--modus-wc-color-base-content-low-contrast)',
-            display: 'flex',
-            pointerEvents: 'none',
+            position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)',
+            color: 'var(--modus-wc-color-base-content-low-contrast)', display: 'flex', pointerEvents: 'none',
           }}>
             <ModusWcIcon name="search" size="sm" decorative />
           </span>
@@ -307,39 +302,32 @@ export default function VendorHub() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{
-              width: '100%',
-              boxSizing: 'border-box',
+              width: '100%', boxSizing: 'border-box',
               padding: '0.5rem 0.75rem 0.5rem 2rem',
-              border: '1px solid var(--modus-wc-color-base-200)',
-              borderRadius: 6,
-              fontFamily: 'Open Sans, sans-serif',
-              fontSize: '0.875rem',
-              background: 'var(--modus-wc-color-base-100)',
-              color: 'var(--modus-wc-color-base-content)',
+              border: '1px solid var(--modus-wc-color-base-200)', borderRadius: 6,
+              fontFamily: 'Open Sans, sans-serif', fontSize: '0.875rem',
+              background: 'var(--modus-wc-color-base-page)', color: 'var(--modus-wc-color-base-content)',
               outline: 'none',
             }}
           />
         </div>
 
         {/* Category pills */}
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center', paddingTop: '8px', paddingBottom: '8px' }}>
           {CATEGORIES.map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
               style={{
-                padding: '4px 12px',
-                borderRadius: 99,
+                padding: '4px 12px', borderRadius: 99,
                 border: activeCategory === cat
                   ? '1px solid var(--modus-wc-color-primary)'
                   : '1px solid var(--modus-wc-color-base-200)',
                 background: activeCategory === cat ? 'var(--modus-wc-color-primary)' : 'var(--modus-wc-color-base-100)',
                 color: activeCategory === cat ? '#fff' : 'var(--modus-wc-color-base-content)',
-                fontFamily: 'Open Sans, sans-serif',
-                fontSize: '0.75rem',
+                fontFamily: 'Open Sans, sans-serif', fontSize: '0.75rem',
                 fontWeight: activeCategory === cat ? 600 : 400,
-                cursor: 'pointer',
-                transition: 'all 0.15s',
+                cursor: 'pointer', transition: 'all 0.15s',
               }}
             >
               {cat}

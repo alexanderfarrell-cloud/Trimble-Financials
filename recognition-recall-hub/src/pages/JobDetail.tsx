@@ -451,19 +451,101 @@ function MilestoneListPanel({
 
 // ─── Milestone side panel ─────────────────────────────────────────────────────
 
+const INPUT_STYLE: React.CSSProperties = {
+  width: '100%', boxSizing: 'border-box',
+  padding: '0.35rem 0.5rem',
+  border: '1px solid var(--modus-wc-color-base-200)', borderRadius: 4,
+  fontFamily: 'Open Sans, sans-serif', fontSize: '0.8125rem',
+  background: 'var(--modus-wc-color-base-page)', color: 'var(--modus-wc-color-base-content)',
+  outline: 'none',
+}
+
+const BTN_PRIMARY: React.CSSProperties = {
+  padding: '5px 14px', borderRadius: 4, border: 'none', cursor: 'pointer',
+  background: 'var(--modus-wc-color-primary)', color: '#fff',
+  fontFamily: 'Open Sans, sans-serif', fontSize: '0.8125rem', fontWeight: 600,
+}
+
+const BTN_GHOST: React.CSSProperties = {
+  padding: '5px 14px', borderRadius: 4, cursor: 'pointer',
+  border: '1px solid var(--modus-wc-color-base-200)',
+  background: 'transparent', color: 'var(--modus-wc-color-base-content)',
+  fontFamily: 'Open Sans, sans-serif', fontSize: '0.8125rem',
+}
+
+interface MilestoneDraft {
+  name: string
+  budgetPct: string
+  targetDate: string
+}
+
+const EMPTY_DRAFT: MilestoneDraft = { name: '', budgetPct: '', targetDate: '' }
+
 function MilestoneSidePanel({
   milestones,
+  totalBudget,
   onClose,
   onToggle,
+  onAdd,
+  onUpdate,
+  onDelete,
 }: {
   milestones: MilestoneData[]
+  totalBudget: number
   onClose: () => void
   onToggle: (id: string) => void
+  onAdd: (m: MilestoneData) => void
+  onUpdate: (m: MilestoneData) => void
+  onDelete: (id: string) => void
 }) {
+  const [editingId, setEditingId]   = useState<string | null>(null)
+  const [editDraft, setEditDraft]   = useState<MilestoneDraft>(EMPTY_DRAFT)
+  const [showAdd, setShowAdd]       = useState(false)
+  const [addDraft, setAddDraft]     = useState<MilestoneDraft>(EMPTY_DRAFT)
+
+  function startEdit(m: MilestoneData) {
+    setEditingId(m.id)
+    setEditDraft({
+      name:       m.name,
+      budgetPct:  String(m.budgetPct),
+      targetDate: m.targetDate === '—' ? '' : m.targetDate,
+    })
+    setShowAdd(false)
+  }
+
+  function saveEdit(m: MilestoneData) {
+    const pct = Math.min(100, Math.max(0, Number(editDraft.budgetPct) || m.budgetPct))
+    onUpdate({
+      ...m,
+      name:       editDraft.name.trim() || m.name,
+      budgetPct:  pct,
+      budgetAmount: totalBudget * (pct / 100),
+      targetDate: editDraft.targetDate || '—',
+    })
+    setEditingId(null)
+  }
+
+  function saveAdd() {
+    const pct = Math.min(100, Math.max(0, Number(addDraft.budgetPct) || 0))
+    onAdd({
+      id:           `m-${Date.now()}`,
+      name:         addDraft.name.trim() || 'New Milestone',
+      budgetPct:    pct,
+      budgetAmount: totalBudget * (pct / 100),
+      targetDate:   addDraft.targetDate || '—',
+      targetDatePct: pct,
+      isCompleted:  false,
+    })
+    setAddDraft(EMPTY_DRAFT)
+    setShowAdd(false)
+  }
+
   return (
     <>
       <div className="milestone-panel-backdrop" onClick={onClose} aria-hidden="true" />
       <div className="milestone-side-panel" role="dialog" aria-label="Manage Milestones">
+
+        {/* Header */}
         <div className="milestone-panel-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <ModusWcIcon name="flag" decorative />
@@ -473,29 +555,163 @@ function MilestoneSidePanel({
             <ModusWcIcon name="close" size="sm" decorative />
           </ModusWcButton>
         </div>
+
+        {/* Milestone list */}
         <div className="milestone-panel-body">
           {milestones.map(m => (
             <div key={m.id} className="milestone-panel-row">
-              <div className="milestone-panel-row-top">
-                <ModusWcCheckbox
-                  value={m.isCompleted}
-                  size="sm"
-                  aria-label={`Mark ${m.name} ${m.isCompleted ? 'incomplete' : 'complete'}`}
-                  onInputChange={() => onToggle(m.id)}
-                />
-                <span style={{ fontSize: '0.875rem', fontWeight: m.isCompleted ? 400 : 600, flex: 1 }}>
-                  {m.name}
-                </span>
-              </div>
-              <div className="milestone-panel-row-meta">
-                <span>
-                  <span className="milestone-panel-meta-label">Budget gate </span>
-                  {m.budgetPct}% · {fmt(m.budgetAmount)}
-                </span>
-              </div>
+
+              {editingId === m.id ? (
+                /* ── Edit form ── */
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <div>
+                    <label style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--modus-wc-color-base-content-low-contrast)', display: 'block', marginBottom: 3 }}>
+                      Name
+                    </label>
+                    <input
+                      style={INPUT_STYLE}
+                      value={editDraft.name}
+                      onChange={e => setEditDraft(d => ({ ...d, name: e.target.value }))}
+                      autoFocus
+                    />
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <div>
+                      <label style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--modus-wc-color-base-content-low-contrast)', display: 'block', marginBottom: 3 }}>
+                        Budget gate %
+                      </label>
+                      <input
+                        style={INPUT_STYLE}
+                        type="number" min={0} max={100}
+                        value={editDraft.budgetPct}
+                        onChange={e => setEditDraft(d => ({ ...d, budgetPct: e.target.value }))}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--modus-wc-color-base-content-low-contrast)', display: 'block', marginBottom: 3 }}>
+                        Target date
+                      </label>
+                      <input
+                        style={INPUT_STYLE}
+                        type="date"
+                        value={editDraft.targetDate}
+                        onChange={e => setEditDraft(d => ({ ...d, targetDate: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', marginTop: 2 }}>
+                    <button style={BTN_GHOST} onClick={() => setEditingId(null)}>Cancel</button>
+                    <button style={BTN_PRIMARY} onClick={() => saveEdit(m)}>Save</button>
+                  </div>
+                </div>
+              ) : (
+                /* ── Read view ── */
+                <>
+                  <div className="milestone-panel-row-top">
+                    <ModusWcCheckbox
+                      value={m.isCompleted}
+                      size="sm"
+                      aria-label={`Mark ${m.name} ${m.isCompleted ? 'incomplete' : 'complete'}`}
+                      onInputChange={() => onToggle(m.id)}
+                    />
+                    <span style={{ fontSize: '0.875rem', fontWeight: m.isCompleted ? 400 : 600, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textDecoration: m.isCompleted ? 'line-through' : 'none', color: m.isCompleted ? 'var(--modus-wc-color-base-content-low-contrast)' : 'var(--modus-wc-color-base-content)' }}>
+                      {m.name}
+                    </span>
+                    <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
+                      <button
+                        aria-label={`Edit ${m.name}`}
+                        onClick={() => startEdit(m)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, borderRadius: 4, color: 'var(--modus-wc-color-base-content-low-contrast)', display: 'flex' }}
+                      >
+                        <ModusWcIcon name="pencil" size="sm" decorative />
+                      </button>
+                      <button
+                        aria-label={`Delete ${m.name}`}
+                        onClick={() => onDelete(m.id)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, borderRadius: 4, color: 'var(--modus-wc-color-danger, #da212c)', display: 'flex' }}
+                      >
+                        <ModusWcIcon name="delete" size="sm" decorative />
+                      </button>
+                    </div>
+                  </div>
+                  <div className="milestone-panel-row-meta" style={{ marginTop: 4 }}>
+                    <span>
+                      <span className="milestone-panel-meta-label">Budget </span>
+                      {m.budgetPct}% · {fmt(m.budgetAmount)}
+                    </span>
+                    <span>
+                      <span className="milestone-panel-meta-label">Target </span>
+                      {m.targetDate === '—' || !m.targetDate
+                        ? <span style={{ color: 'var(--modus-wc-color-base-content-low-contrast)' }}>Not set</span>
+                        : m.targetDate}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
           ))}
+
+          {/* Add form */}
+          {showAdd && (
+            <div className="milestone-panel-row" style={{ background: 'var(--modus-wc-color-base-100)' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div>
+                  <label style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--modus-wc-color-base-content-low-contrast)', display: 'block', marginBottom: 3 }}>
+                    Name
+                  </label>
+                  <input
+                    style={INPUT_STYLE}
+                    placeholder="e.g. Final Inspection"
+                    value={addDraft.name}
+                    onChange={e => setAddDraft(d => ({ ...d, name: e.target.value }))}
+                    autoFocus
+                  />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                  <div>
+                    <label style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--modus-wc-color-base-content-low-contrast)', display: 'block', marginBottom: 3 }}>
+                      Budget gate %
+                    </label>
+                    <input
+                      style={INPUT_STYLE}
+                      type="number" min={0} max={100} placeholder="e.g. 90"
+                      value={addDraft.budgetPct}
+                      onChange={e => setAddDraft(d => ({ ...d, budgetPct: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--modus-wc-color-base-content-low-contrast)', display: 'block', marginBottom: 3 }}>
+                      Target date
+                    </label>
+                    <input
+                      style={INPUT_STYLE}
+                      type="date"
+                      value={addDraft.targetDate}
+                      onChange={e => setAddDraft(d => ({ ...d, targetDate: e.target.value }))}
+                    />
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end', marginTop: 2 }}>
+                  <button style={BTN_GHOST} onClick={() => { setShowAdd(false); setAddDraft(EMPTY_DRAFT) }}>Cancel</button>
+                  <button style={BTN_PRIMARY} onClick={saveAdd}>Add</button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
+
+        {/* Footer — Add milestone button */}
+        {!showAdd && (
+          <div className="milestone-panel-footer">
+            <button
+              style={{ ...BTN_PRIMARY, width: '100%', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: 6 }}
+              onClick={() => { setShowAdd(true); setEditingId(null) }}
+            >
+              <ModusWcIcon name="add" size="sm" decorative />
+              Add Milestone
+            </button>
+          </div>
+        )}
       </div>
     </>
   )
@@ -728,6 +944,7 @@ const STATUS_COLOR: Record<HubJob['status'], 'success' | 'warning' | 'secondary'
   'On Hold': 'warning',
   Completed: 'secondary',
   Pending: 'primary',
+  Draft: 'secondary',
 }
 
 type DetailTab = 'overview' | 'transactions' | 'contract'
@@ -737,10 +954,19 @@ const TABS: { id: DetailTab; label: string; icon: string }[] = [
   { id: 'contract',     label: 'Contract',     icon: 'description' },
 ]
 
+const DETAIL_MENU_ITEMS = [
+  { label: 'Add Job Billing',   color: 'var(--modus-wc-color-base-content)' },
+  { label: 'Add Job Expenses',  color: 'var(--modus-wc-color-base-content)' },
+  { label: 'Mark as Completed', color: 'var(--modus-wc-color-success, #006638)' },
+  { label: 'Mark as Cancelled', color: 'var(--modus-wc-color-danger, #da212c)' },
+]
+
 export default function JobDetail({ job }: { job: HubJob }) {
   const [milestones, setMilestones] = useState<MilestoneData[]>(() => buildMilestones(job))
   const [panelOpen, setPanelOpen]   = useState(false)
   const [activeTab, setActiveTab]   = useState<DetailTab>('overview')
+  const [menuOpen, setMenuOpen]     = useState(false)
+  const menuRef                     = useRef<HTMLDivElement>(null)
 
   // Rebuild milestones when the selected job changes
   useEffect(() => {
@@ -748,16 +974,90 @@ export default function JobDetail({ job }: { job: HubJob }) {
     setActiveTab('overview')
   }, [job.id])
 
+  useEffect(() => {
+    if (!menuOpen) return
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [menuOpen])
+
   const timePct = Math.max(5, job.spentPct * 0.88)
 
   const toggleMilestone = (id: string) => {
     setMilestones(prev => prev.map(m => m.id === id ? { ...m, isCompleted: !m.isCompleted } : m))
   }
 
+  const addMilestone = (m: MilestoneData) => {
+    setMilestones(prev => [...prev, m])
+  }
+
+  const updateMilestone = (updated: MilestoneData) => {
+    setMilestones(prev => prev.map(m => m.id === updated.id ? updated : m))
+  }
+
+  const deleteMilestone = (id: string) => {
+    setMilestones(prev => prev.filter(m => m.id !== id))
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
       {/* Job header */}
-      <div className="job-header">
+      <div className="job-header" style={{ position: 'relative' }}>
+        {/* Action menu — top right */}
+        <div ref={menuRef} style={{ position: 'absolute', top: 12, right: 12 }}>
+          <button
+            aria-label="Job actions"
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((o) => !o)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '6px 12px', borderRadius: 6, cursor: 'pointer',
+              border: '1px solid var(--modus-wc-color-primary)',
+              background: 'transparent',
+              color: 'var(--modus-wc-color-primary)',
+              fontFamily: 'Open Sans, sans-serif', fontSize: '0.8125rem', fontWeight: 600,
+            }}
+          >
+            Actions
+            <ModusWcIcon name="expand_more" size="sm" decorative />
+          </button>
+          {menuOpen && (
+            <div
+              role="menu"
+              style={{
+                position: 'absolute', top: 'calc(100% + 4px)', right: 0,
+                zIndex: 100, background: 'var(--modus-wc-color-base-page)',
+                border: '1px solid var(--modus-wc-color-base-200)',
+                borderRadius: 8, boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
+                padding: '0.375rem 0', minWidth: 200,
+                display: 'flex', flexDirection: 'column',
+              }}
+            >
+              {DETAIL_MENU_ITEMS.map(({ label, color }) => (
+                <button
+                  key={label}
+                  role="menuitem"
+                  onClick={() => setMenuOpen(false)}
+                  style={{
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    padding: '0.55rem 1rem', textAlign: 'left',
+                    fontFamily: 'Open Sans, sans-serif', fontSize: '0.875rem',
+                    color, fontWeight: 400, transition: 'background 0.1s',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--modus-wc-color-base-100)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
           <ModusWcBadge color={STATUS_COLOR[job.status]} size="sm" text={job.status} />
           <span style={{ fontSize: '0.75rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>{job.id}</span>
@@ -862,8 +1162,12 @@ export default function JobDetail({ job }: { job: HubJob }) {
       {panelOpen && (
         <MilestoneSidePanel
           milestones={milestones}
+          totalBudget={job.contractValue}
           onClose={() => setPanelOpen(false)}
           onToggle={toggleMilestone}
+          onAdd={addMilestone}
+          onUpdate={updateMilestone}
+          onDelete={deleteMilestone}
         />
       )}
     </div>

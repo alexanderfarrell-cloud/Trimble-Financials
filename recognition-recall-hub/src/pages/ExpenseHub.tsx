@@ -162,11 +162,8 @@ export default function ExpenseHub() {
   const [activeTab, setActiveTab] = useState<Tab>('All')
   const [search, setSearch] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('date-desc')
-  const [categoryFilter, setCategoryFilter] = useState<ExpenseCategory | 'All'>('All')
-
   const filtered = EXPENSES
     .filter(TAB_FILTER[activeTab])
-    .filter((e) => categoryFilter === 'All' || e.category === categoryFilter)
     .filter((e) => {
       const q = search.trim().toLowerCase()
       if (!q) return true
@@ -191,9 +188,6 @@ export default function ExpenseHub() {
   const totalApproved = EXPENSES.filter((e) => e.status === 'Approved').reduce((s, e) => s + e.amount, 0)
   const totalPending = EXPENSES.filter((e) => e.status === 'Pending' || e.status === 'Draft').reduce((s, e) => s + e.amount, 0)
   const totalRejected = EXPENSES.filter((e) => e.status === 'Rejected').reduce((s, e) => s + e.amount, 0)
-
-  const categoryTotals = getCategoryTotals(EXPENSES)
-  const maxCatTotal = Math.max(...categoryTotals.map((c) => c.total))
 
   const tabCount: Record<Tab, number> = {
     All: EXPENSES.length,
@@ -241,67 +235,8 @@ export default function ExpenseHub() {
         </div>
       </div>
 
-      {/* Category breakdown + table */}
-      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-        {/* Category bars — click to filter */}
-        <div className="section-card" style={{ minWidth: 220, flex: '0 0 220px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
-            <p className="section-card-title" style={{ margin: 0 }}>By Category</p>
-            {categoryFilter !== 'All' && (
-              <button
-                onClick={() => setCategoryFilter('All')}
-                style={{
-                  background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px',
-                  fontSize: '0.7rem', color: 'var(--modus-wc-color-primary)', fontFamily: 'inherit',
-                }}
-                aria-label="Clear category filter"
-              >
-                Clear
-              </button>
-            )}
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            {categoryTotals.map(({ category, total, pct }) => {
-              const isActive = categoryFilter === category
-              return (
-                <button
-                  key={category}
-                  onClick={() => setCategoryFilter(isActive ? 'All' : category)}
-                  style={{
-                    display: 'flex', flexDirection: 'column', gap: 4,
-                    background: isActive ? 'var(--modus-wc-color-base-100)' : 'none',
-                    border: isActive ? `1px solid ${CATEGORY_COLOR[category]}` : '1px solid transparent',
-                    borderRadius: 6, padding: '4px 6px', cursor: 'pointer', textAlign: 'left',
-                    fontFamily: 'inherit',
-                  }}
-                  aria-pressed={isActive}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--modus-wc-color-base-content)' }}>
-                      {category}
-                    </span>
-                    <span className="text-muted">{pct}%</span>
-                  </div>
-                  <div className="prog-track" style={{ height: 8, borderRadius: 4 }}>
-                    <div
-                      style={{
-                        height: '100%',
-                        borderRadius: 4,
-                        width: `${Math.round((total / maxCatTotal) * 100)}%`,
-                        background: CATEGORY_COLOR[category],
-                        opacity: categoryFilter !== 'All' && !isActive ? 0.35 : 1,
-                      }}
-                    />
-                  </div>
-                  <span className="text-muted">{fmt(total)}</span>
-                </button>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* Expense list */}
-        <div className="section-card" style={{ flex: 1, minWidth: 0, padding: 0, overflow: 'hidden' }}>
+      {/* Expense list */}
+      <div className="section-card" style={{ padding: 0, overflow: 'hidden' }}>
           {/* Tab filter */}
           <div className="tab-bar">
             {TABS.map((tab) => (
@@ -319,17 +254,14 @@ export default function ExpenseHub() {
           </div>
 
           {/* Search + sort toolbar */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: '0.5rem',
-            padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--modus-wc-color-base-200)',
-          }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <div style={{ position: 'relative', flex: 1 }}>
-              <ModusWcIcon
-                name="search"
-                size="xs"
-                decorative
-                style={{ position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)', color: 'var(--modus-wc-color-base-content-low-contrast)', pointerEvents: 'none' } as React.CSSProperties}
-              />
+              <span style={{
+                position: 'absolute', left: 8, top: '50%', transform: 'translateY(-50%)',
+                color: 'var(--modus-wc-color-base-content-low-contrast)', display: 'flex', pointerEvents: 'none',
+              }}>
+                <ModusWcIcon name="search" size="sm" decorative />
+              </span>
               <input
                 type="text"
                 placeholder="Search description, job, or person…"
@@ -337,10 +269,11 @@ export default function ExpenseHub() {
                 onChange={(e) => setSearch(e.target.value)}
                 style={{
                   width: '100%', boxSizing: 'border-box',
-                  paddingLeft: 28, paddingRight: 8, paddingTop: 5, paddingBottom: 5,
-                  fontSize: '0.8125rem', border: '1px solid var(--modus-wc-color-base-300)',
-                  borderRadius: 4, background: 'var(--modus-wc-color-base-page)',
-                  color: 'var(--modus-wc-color-base-content)', fontFamily: 'inherit', outline: 'none',
+                  padding: '0.5rem 0.75rem 0.5rem 2rem',
+                  border: '1px solid var(--modus-wc-color-base-200)', borderRadius: 6,
+                  fontFamily: 'Open Sans, sans-serif', fontSize: '0.875rem',
+                  background: 'var(--modus-wc-color-base-page)', color: 'var(--modus-wc-color-base-content)',
+                  outline: 'none',
                 }}
               />
             </div>
@@ -349,9 +282,9 @@ export default function ExpenseHub() {
               onChange={(e) => setSortKey(e.target.value as SortKey)}
               aria-label="Sort expenses"
               style={{
-                fontSize: '0.8125rem', padding: '5px 8px', border: '1px solid var(--modus-wc-color-base-300)',
-                borderRadius: 4, background: 'var(--modus-wc-color-base-page)',
-                color: 'var(--modus-wc-color-base-content)', fontFamily: 'inherit', cursor: 'pointer', flexShrink: 0,
+                fontSize: '0.875rem', padding: '0.5rem 0.75rem', border: '1px solid var(--modus-wc-color-base-200)',
+                borderRadius: 6, background: 'var(--modus-wc-color-base-page)',
+                color: 'var(--modus-wc-color-base-content)', fontFamily: 'Open Sans, sans-serif', cursor: 'pointer', flexShrink: 0,
               }}
             >
               <option value="date-desc">Date (newest)</option>
@@ -424,12 +357,11 @@ export default function ExpenseHub() {
             {filtered.length === 0 && (
               <div className="empty-state">
                 <ModusWcIcon name="credit_card" size="lg" decorative />
-                <span>{search || categoryFilter !== 'All' ? 'No expenses match your filters' : 'No expenses in this category'}</span>
+                <span>{search ? 'No expenses match your filters' : 'No expenses in this category'}</span>
               </div>
             )}
           </div>
         </div>
-      </div>
     </div>
   )
 }
