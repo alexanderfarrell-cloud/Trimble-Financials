@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { ModusWcBadge, ModusWcIcon, ModusWcButton } from '@trimble-oss/moduswebcomponents-react'
 import JobDetail, { type HubJob } from './JobDetail'
 
@@ -298,6 +299,7 @@ function JobCard({ job, onClick }: { job: HubJob; onClick: () => void }) {
 // ─── JobHub ───────────────────────────────────────────────────────────────────
 
 export default function JobHub() {
+  const navigate = useNavigate()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [search, setSearch]         = useState('')
   const [sortKey, setSortKey]       = useState<SortKey>('name')
@@ -372,6 +374,24 @@ export default function JobHub() {
           <ModusWcIcon name="assignment" size="md" decorative />
           Jobs
         </h1>
+        <button
+          onClick={() => navigate('/jobs/new')}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            padding: '0.4rem 1rem',
+            borderRadius: 6,
+            border: 'none',
+            background: 'var(--modus-wc-color-primary)',
+            color: '#fff',
+            fontFamily: 'Open Sans, sans-serif',
+            fontSize: '0.8125rem',
+            fontWeight: 600,
+            cursor: 'pointer',
+          }}
+        >
+          <ModusWcIcon name="add" size="xs" decorative />
+          New Job
+        </button>
       </div>
 
       {/* KPI summary */}

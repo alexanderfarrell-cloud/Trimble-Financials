@@ -16,7 +16,7 @@ interface Expense {
   status: ExpenseStatus
 }
 
-const EXPENSES: Expense[] = [
+export const EXPENSES: Expense[] = [
   {
     id: 'EXP-2025-0312',
     date: 'May 2, 2025',

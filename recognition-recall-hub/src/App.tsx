@@ -11,10 +11,15 @@ import {
 import { useMediaQuery } from './hooks/useMediaQuery'
 import DashboardHub from './pages/DashboardHub'
 import JobHub from './pages/JobHub'
+import NewJobPage from './pages/NewJobPage'
 import BillingHub from './pages/BillingHub'
 import CustomerHub from './pages/CustomerHub'
 import ExpenseHub from './pages/ExpenseHub'
 import VendorHub from './pages/VendorHub'
+import PeriodWorkspacePage from './pages/PeriodWorkspacePage'
+import ClosePeriodWizard from './pages/ClosePeriodWizard'
+import ReopenPeriodWizard from './pages/ReopenPeriodWizard'
+import { PeriodsProvider } from './context/PeriodsContext'
 
 const SIDENAV_MAX_WIDTH = '256px'
 const SIDENAV_MIN_WIDTH = '4rem'
@@ -27,6 +32,7 @@ const NAV_ITEMS = [
   { path: '/customers', label: 'Customers', icon: 'contacts' },
   { path: '/expenses', label: 'Expenses', icon: 'credit_card' },
   { path: '/vendors', label: 'Vendors', icon: 'business' },
+  { path: '/periods', label: 'Periods', icon: 'calendar_today' },
 ] as const
 
 export default function App() {
@@ -151,14 +157,20 @@ export default function App() {
 
           {/* Main scrollable area */}
           <main id="main-content">
-            <Routes>
-              <Route path="/" element={<DashboardHub />} />
-              <Route path="/jobs" element={<JobHub />} />
-              <Route path="/billing" element={<BillingHub />} />
-              <Route path="/customers" element={<CustomerHub />} />
-              <Route path="/expenses" element={<ExpenseHub />} />
-              <Route path="/vendors" element={<VendorHub />} />
-            </Routes>
+            <PeriodsProvider>
+              <Routes>
+                <Route path="/" element={<DashboardHub />} />
+                <Route path="/jobs" element={<JobHub />} />
+                <Route path="/jobs/new" element={<NewJobPage />} />
+                <Route path="/billing" element={<BillingHub />} />
+                <Route path="/customers" element={<CustomerHub />} />
+                <Route path="/expenses" element={<ExpenseHub />} />
+                <Route path="/vendors" element={<VendorHub />} />
+                <Route path="/periods" element={<PeriodWorkspacePage />} />
+                <Route path="/periods/close" element={<ClosePeriodWizard />} />
+                <Route path="/periods/reopen" element={<ReopenPeriodWizard />} />
+              </Routes>
+            </PeriodsProvider>
           </main>
         </div>
       </div>

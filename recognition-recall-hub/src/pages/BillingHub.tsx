@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { ModusWcBadge, ModusWcIcon } from '@trimble-oss/moduswebcomponents-react'
 
 type InvoiceStatus = 'Overdue' | 'Pending' | 'Approved' | 'Paid' | 'Draft'
@@ -14,7 +14,7 @@ interface Invoice {
   status: InvoiceStatus
 }
 
-const INVOICES: Invoice[] = [
+export const INVOICES: Invoice[] = [
   {
     id: 'INV-2025-0142',
     jobName: 'Downtown Tower — Phase 2',
@@ -124,34 +124,53 @@ const STATUS_STRIP: Record<InvoiceStatus, string> = {
   Draft:    'var(--modus-wc-color-base-300, #b0b8c1)',
 }
 
-interface InvoiceGroup {
-  jobId: string
-  jobName: string
-  customer: string
-  invoices: Invoice[]
-  total: number
-}
 
-function groupByJob(invoices: Invoice[]): InvoiceGroup[] {
-  const map = new Map<string, InvoiceGroup>()
-  for (const inv of invoices) {
-    if (!map.has(inv.jobId)) {
-      map.set(inv.jobId, { jobId: inv.jobId, jobName: inv.jobName, customer: inv.customer, invoices: [], total: 0 })
+function InvoiceCardMenu({ invoiceId, open, onOpen, onClose }: {
+  invoiceId: string; open: boolean; onOpen: () => void; onClose: () => void
+}) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose()
     }
-    const g = map.get(inv.jobId)!
-    g.invoices.push(inv)
-    g.total += inv.amount
-  }
-  return Array.from(map.values())
-}
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open, onClose])
 
-type ListMode = 'grouped' | 'flat'
+  return (
+    <div ref={ref} style={{ position: 'relative', flexShrink: 0 }}>
+      <button
+        aria-label="More options"
+        onClick={(e) => { e.stopPropagation(); open ? onClose() : onOpen() }}
+        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', borderRadius: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, color: 'var(--modus-wc-color-base-content-low-contrast)' }}
+        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--modus-wc-color-base-100)')}
+        onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+      >
+        {[0,1,2].map((i) => <span key={i} style={{ width: 3, height: 3, borderRadius: '50%', background: 'currentColor', display: 'block' }} />)}
+      </button>
+      {open && (
+        <div style={{ position: 'absolute', top: '100%', right: 0, zIndex: 50, background: 'var(--modus-wc-color-base-page)', border: '1px solid var(--modus-wc-color-base-200)', borderRadius: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.10)', minWidth: 160, overflow: 'hidden', marginTop: 4 }}>
+          <button
+            onClick={() => onClose()}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 8, padding: '0.625rem 1rem', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Open Sans, sans-serif', fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content)', textAlign: 'left' }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--modus-wc-color-base-100)')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+          >
+            <ModusWcIcon name="check_circle" size="xs" decorative style={{ color: 'var(--modus-wc-color-success, #006638)' } as React.CSSProperties} />
+            Mark as Collected
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function BillingHub() {
   const [activeTab, setActiveTab] = useState<Tab>('All')
   const [search, setSearch] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('due-desc')
-  const [listMode, setListMode] = useState<ListMode>('grouped')
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
 
   const filtered = INVOICES
     .filter(TAB_FILTER[activeTab])
@@ -177,7 +196,6 @@ export default function BillingHub() {
       }
     })
 
-  const groups = groupByJob(filtered)
 
   const totalBilled = INVOICES.reduce((s, i) => s + i.amount, 0)
   const outstanding = INVOICES.filter((i) => ['Overdue', 'Pending', 'Approved'].includes(i.status))
@@ -294,108 +312,9 @@ export default function BillingHub() {
             <option value="customer-az">Customer (A–Z)</option>
           </select>
 
-          {/* Grouped / Flat toggle */}
-          <div style={{
-            display: 'flex', borderRadius: 6, overflow: 'hidden',
-            border: '1px solid var(--modus-wc-color-base-300)', flexShrink: 0,
-          }}>
-            {(['grouped', 'flat'] as ListMode[]).map((mode) => (
-              <button
-                key={mode}
-                onClick={() => setListMode(mode)}
-                aria-pressed={listMode === mode}
-                title={mode === 'grouped' ? 'Group by project' : 'Flat list'}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  padding: '5px 8px', border: 'none', cursor: 'pointer',
-                  background: listMode === mode ? 'var(--modus-wc-color-primary)' : 'var(--modus-wc-color-base-page)',
-                  color: listMode === mode ? '#fff' : 'var(--modus-wc-color-base-content-low-contrast)',
-                  transition: 'background 0.15s',
-                }}
-              >
-                <ModusWcIcon
-                  name={mode === 'grouped' ? 'list' : 'format_list_bulleted'}
-                  size="xs"
-                  decorative
-                />
-              </button>
-            ))}
-          </div>
         </div>
 
-        {/* Grouped view */}
-        {listMode === 'grouped' && (
-          <div style={{ display: 'flex', flexDirection: 'column', padding: '0.5rem', gap: '1rem' }}>
-            {groups.length === 0 && (
-              <div className="empty-state">
-                <ModusWcIcon name="receipt" size="lg" decorative />
-                <span>{search ? 'No invoices match your search' : 'No invoices in this category'}</span>
-              </div>
-            )}
-            {groups.map((group) => (
-              <div key={group.jobId}>
-                <div style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  padding: '0.375rem 0.75rem', marginBottom: '0.375rem',
-                  borderRadius: 6, background: 'var(--modus-wc-color-base-100)',
-                  borderLeft: '3px solid var(--modus-wc-color-primary)',
-                }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--modus-wc-color-base-content)' }}>
-                      {group.jobName}
-                    </span>
-                    <span className="text-muted">{group.customer} · {group.jobId}</span>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1, flexShrink: 0 }}>
-                    <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--modus-wc-color-base-content)' }}>
-                      {fmt(group.total)}
-                    </span>
-                    <span className="text-muted">{group.invoices.length} invoice{group.invoices.length !== 1 ? 's' : ''}</span>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', paddingLeft: '0.5rem' }}>
-                  {group.invoices.map((inv) => {
-                    const isOverdue = inv.status === 'Overdue'
-                    return (
-                      <div
-                        key={inv.id}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: '0.75rem',
-                          padding: '0.5rem 0.75rem', borderRadius: 6,
-                          border: `1px solid ${isOverdue ? 'var(--modus-wc-color-danger, #da212c)' : 'var(--modus-wc-color-base-200)'}`,
-                          background: 'var(--modus-wc-color-base-page)',
-                        }}
-                      >
-                        <div style={{ width: 4, alignSelf: 'stretch', borderRadius: 2, flexShrink: 0, background: STATUS_STRIP[inv.status] }} />
-                        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 3 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-                            <span className="text-muted">{inv.id} · Issued {inv.issuedDate}</span>
-                            <span style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--modus-wc-color-base-content)', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                              {fmt(inv.amount)}
-                            </span>
-                          </div>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
-                            <span style={{
-                              fontSize: '0.75rem', fontWeight: isOverdue ? 700 : 400,
-                              color: isOverdue ? 'var(--modus-wc-color-danger, #da212c)' : 'var(--modus-wc-color-base-content-low-contrast)',
-                            }}>
-                              {isOverdue ? '⚠ ' : ''}Due {inv.dueDate}
-                            </span>
-                            <ModusWcBadge color={STATUS_COLOR[inv.status]} size="sm" text={inv.status} />
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Flat list view */}
-        {listMode === 'flat' && (
-          <div style={{ display: 'flex', flexDirection: 'column', padding: '0.5rem', gap: '0.5rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', padding: '0.5rem', gap: '0.5rem' }}>
             {filtered.length === 0 && (
               <div className="empty-state">
                 <ModusWcIcon name="receipt" size="lg" decorative />
@@ -414,7 +333,6 @@ export default function BillingHub() {
                     background: 'var(--modus-wc-color-base-page)',
                   }}
                 >
-                  <div style={{ width: 4, alignSelf: 'stretch', borderRadius: 2, flexShrink: 0, background: STATUS_STRIP[inv.status] }} />
                   <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
                     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
@@ -423,9 +341,12 @@ export default function BillingHub() {
                         </span>
                         <span className="text-muted">{inv.id} · Issued {inv.issuedDate}</span>
                       </div>
-                      <span style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--modus-wc-color-base-content)', whiteSpace: 'nowrap', flexShrink: 0 }}>
-                        {fmt(inv.amount)}
-                      </span>
+                      <InvoiceCardMenu
+                        invoiceId={inv.id}
+                        open={openMenuId === inv.id}
+                        onOpen={() => setOpenMenuId(inv.id)}
+                        onClose={() => setOpenMenuId(null)}
+                      />
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
@@ -437,14 +358,15 @@ export default function BillingHub() {
                           {isOverdue ? '⚠ ' : ''}Due {inv.dueDate}
                         </span>
                       </div>
-                      <ModusWcBadge color={STATUS_COLOR[inv.status]} size="sm" text={inv.status} />
+                      <span style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--modus-wc-color-base-content)', whiteSpace: 'nowrap' }}>
+                        {fmt(inv.amount)}
+                      </span>
                     </div>
                   </div>
                 </div>
               )
             })}
           </div>
-        )}
       </div>
     </div>
   )
