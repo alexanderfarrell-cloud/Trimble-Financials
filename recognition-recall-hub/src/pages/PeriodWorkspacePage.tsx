@@ -68,6 +68,13 @@ export default function PeriodWorkspacePage() {
           <ModusWcIcon name="calendar_today" size="md" decorative />
           Fiscal Periods
         </h1>
+        <button
+          aria-label="Back to Accounting"
+          onClick={() => navigate('/accounting')}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--modus-wc-color-base-content-low-contrast)' }}
+        >
+          <ModusWcIcon name="close" size="md" decorative />
+        </button>
       </div>
 
       <p style={{ margin: 0, fontSize: "0.8125rem", color: "var(--modus-wc-color-base-content-low-contrast)" }}>

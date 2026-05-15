@@ -51,26 +51,55 @@ body {
   left: 0;
 }
 
-/* Mobile: hide collapsed rail */
-@media (max-width: 767px) {
-  .rail-wrapper {
-    width: 0;
-    overflow: hidden;
-    pointer-events: none;
-  }
-  .rail-wrapper.rail-expanded {
-    width: 256px;
-    pointer-events: auto;
-  }
-  #main-content {
-    margin-left: 0 !important;
-  }
+/* Collapsed: hide rail on all viewports */
+.rail-wrapper {
+  width: 0;
+  overflow: hidden;
+  pointer-events: none;
 }
 
-/* Desktop: reserve collapsed rail width */
-@media (min-width: 768px) {
-  #main-content {
-    margin-left: 4rem;
+/* Expanded: slide in as a drawer */
+.rail-wrapper.rail-expanded {
+  width: 256px;
+  overflow: visible;
+  pointer-events: auto;
+}
+
+#main-content {
+  margin-left: 0 !important;
+}
+
+/* ── Dark side rail ──────────────────────────────────────────────────────── */
+
+/*
+ * CSS custom properties cascade through shadow DOM boundaries, so overriding
+ * Modus tokens here propagates into every modus-wc-menu-item's shadow root.
+ */
+.rail-wrapper {
+  --modus-wc-color-base-page: #2e3038;
+  --modus-wc-color-base-100: #3a3d47;
+  --modus-wc-color-base-200: rgba(255, 255, 255, 0.12);
+  --modus-wc-color-base-content: rgba(255, 255, 255, 0.92);
+  --modus-wc-color-base-content-low-contrast: rgba(255, 255, 255, 0.55);
+}
+
+/* Background of the rail itself */
+.rail-wrapper modus-wc-side-navigation,
+.rail-wrapper modus-wc-side-navigation::part(base) {
+  background: #2e3038 !important;
+  border-right: none !important;
+  box-shadow: none !important;
+}
+
+/* Icon colour (slotted light DOM, inherits fine) */
+.rail-wrapper modus-wc-icon {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+/* Accounting hub illustration — hide on narrow screens */
+@media (max-width: 767px) {
+  .accounting-illustration {
+    display: none !important;
   }
 }
 
