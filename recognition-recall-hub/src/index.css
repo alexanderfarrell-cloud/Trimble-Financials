@@ -988,3 +988,36 @@ modus-wc-button i.modus-wc-icon {
   outline: 2px solid var(--modus-wc-color-primary);
   outline-offset: 2px;
 }
+
+/* ── Close/Reopen Period wizard responsive ───────────────────────────────── */
+
+.wizard-header {
+  padding: 1.5rem 2rem 1rem;
+}
+
+.wizard-footer {
+  padding: 1.25rem 2rem;
+}
+
+.wizard-content {
+  padding: 2rem;
+}
+
+/* Hide illustration panel and tighten padding on narrow screens */
+@media (max-width: 639px) {
+  .wizard-illustration-panel {
+    display: none !important;
+  }
+
+  .wizard-header {
+    padding: 1rem 1.25rem 0.875rem;
+  }
+
+  .wizard-footer {
+    padding: 0.875rem 1.25rem;
+  }
+
+  .wizard-content {
+    padding: 1.25rem;
+  }
+}
