@@ -29,7 +29,7 @@ function WizardShell({
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", minHeight: "100%", background: "var(--modus-wc-color-base-page)" }}>
-      <div style={{ padding: "1.5rem 2rem 1rem", borderBottom: "1px solid var(--modus-wc-color-base-200)", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
+      <div className="wizard-header" style={{ borderBottom: "1px solid var(--modus-wc-color-base-200)", display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 16 }}>
         <div>
           <div style={{ fontSize: "1.25rem", fontWeight: 700, color: "var(--modus-wc-color-base-content)", marginBottom: 4 }}>{title}</div>
           <div style={{ fontSize: "0.9375rem", fontWeight: 700, color: "var(--modus-wc-color-base-content-low-contrast)" }}>{question}</div>
@@ -44,14 +44,14 @@ function WizardShell({
         </div>
       </div>
 
-      <div style={{ flex: 1, display: "flex", gap: 0 }}>
-        <div style={{ flex: 1, padding: "2rem", overflowY: "auto", minWidth: 0 }}>{children}</div>
-        <div style={{ width: 320, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem" }}>
+      <div style={{ flex: 1, display: "flex", gap: 0, overflow: "hidden" }}>
+        <div className="wizard-content" style={{ flex: 1, overflowY: "auto", minWidth: 0 }}>{children}</div>
+        <div className="wizard-illustration-panel" style={{ width: 320, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem" }}>
           {illustration}
         </div>
       </div>
 
-      <div style={{ padding: "1.25rem 2rem", borderTop: "1px solid var(--modus-wc-color-base-200)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div className="wizard-footer" style={{ borderTop: "1px solid var(--modus-wc-color-base-200)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", gap: 16 }}>
           {showBack && (
             <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "Open Sans, sans-serif", fontSize: "0.875rem", color: "var(--modus-wc-color-primary)", textDecoration: "underline", padding: 0 }}>Back</button>

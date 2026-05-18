@@ -931,3 +931,122 @@ modus-wc-tabs button[role='tab'] {
   color: var(--modus-wc-color-base-content);
 }
 
+/* ── Overview tab responsive layout ─────────────────────────────────────── */
+
+/* Outer wrapper: main content grid + side illustration */
+.overview-tab-grid {
+  display: grid;
+  grid-template-columns: 1fr 256px;
+  gap: 0.75rem;
+  align-items: start;
+}
+
+/* Inner two-column grid: cards on left, cashflow on right */
+.overview-tab-main {
+  display: grid;
+  grid-template-columns: 1fr minmax(0, 420px);
+  gap: 0.75rem;
+  align-items: start;
+}
+
+/* ── Responsive breakpoints ──────────────────────────────────────────────── */
+
+/* Below lg (1024px): hide the illustration panel, stack overview cards */
+@media (max-width: 1023px) {
+  .overview-tab-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-lock-illustration {
+    display: none;
+  }
+}
+
+/* Below md (768px): stack the inner overview columns too */
+@media (max-width: 767px) {
+  .overview-tab-main {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Calendar lock illustration ──────────────────────────────────────────── */
+
+.calendar-lock-illustration {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  border-radius: 6px;
+  background: var(--modus-wc-color-base-100);
+  border: 1px solid var(--modus-wc-color-base-200);
+  min-height: 100%;
+}
+
+.calendar-lock-illustration__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 2rem 1rem;
+  height: 100%;
+  flex: 1;
+}
+
+.calendar-lock-illustration__icon-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--modus-wc-color-base-content-low-contrast);
+  opacity: 0.45;
+}
+
+.calendar-lock-illustration__label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--modus-wc-color-base-content-low-contrast);
+  opacity: 0.6;
+}
+
+/* ── Responsive misc ─────────────────────────────────────────────────────── */
+
+/* Milestone list: allow horizontal scroll on narrow screens */
+@media (max-width: 639px) {
+  .milestone-list {
+    overflow-x: auto;
+  }
+
+  .milestone-list-header,
+  .milestone-list-row {
+    min-width: 380px;
+  }
+
+  /* Job stat cards: wrap to 2 per row then 1 */
+  .job-stat-cards {
+    flex-wrap: wrap;
+  }
+
+  .job-stat-card {
+    flex: 1 1 calc(50% - 1px);
+    border-right: none;
+    border-bottom: 1px solid var(--modus-wc-color-base-200);
+  }
+
+  .job-stat-card:last-child {
+    border-bottom: none;
+  }
+
+  .job-stat-card:nth-child(odd) {
+    border-right: 1px solid var(--modus-wc-color-base-200);
+  }
+}
+
+/* prism-page: reduce horizontal padding on very small screens */
+@media (max-width: 479px) {
+  .prism-page {
+    padding: 1rem 0.75rem;
+  }
+}
+

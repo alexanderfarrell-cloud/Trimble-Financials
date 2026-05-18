@@ -1204,25 +1204,35 @@ function ContractTab() {
   )
 }
 
+// ─── Calendar lock illustration ──────────────────────────────────────────────
+
+function CalendarLockIllustration() {
+  return (
+    <div className="calendar-lock-illustration">
+      <div className="calendar-lock-illustration__inner">
+        <div className="calendar-lock-illustration__icon-stack">
+          <ModusWcIcon name="calendar_today" size="xl" decorative />
+          <ModusWcIcon name="lock" size="lg" decorative />
+        </div>
+        <span className="calendar-lock-illustration__label">Job Scheduled</span>
+      </div>
+    </div>
+  )
+}
+
 // ─── Overview tab ────────────────────────────────────────────────────────────
 
 function OverviewTab({ iteration, costDistribution }: { iteration: Iteration; costDistribution: CostDistribution }) {
   return (
-    <div className="flex flex-col gap-3">
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr minmax(0, 420px)',
-          gap: '0.75rem',
-          alignItems: 'start',
-        }}
-      >
+    <div className="overview-tab-grid">
+      <div className="overview-tab-main">
         <div className="flex flex-col gap-3">
           <RevenueMarginCard iteration={iteration} />
           <CostDistributionCard iteration={iteration} costDistribution={costDistribution} />
         </div>
         <CashflowCard iteration={iteration} />
       </div>
+      <CalendarLockIllustration />
     </div>
   )
 }
