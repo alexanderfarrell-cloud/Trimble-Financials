@@ -54,7 +54,6 @@ export default function App() {
       <div className="app-shell">
         {/* ── Navbar ──────────────────────────────────────────────────── */}
         <ModusWcNavbar
-          appTitle="Prism"
           mainMenuOpen={sideNavExpanded}
           onMainMenuOpenChange={handleMainMenuOpenChange}
           visibility={{
@@ -101,7 +100,7 @@ export default function App() {
               style={{ height: '100%' } as React.CSSProperties}
             >
               <ModusWcMenu size="lg">
-                {NAV_ITEMS.map(({ path, label, icon }) => {
+                {NAV_ITEMS.map(({ path, label }) => {
                   const isAccounting = path === '/accounting'
                   const selected = isAccounting
                     ? location.pathname.startsWith('/accounting') || location.pathname.startsWith('/periods')

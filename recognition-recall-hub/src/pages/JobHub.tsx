@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ModusWcBadge, ModusWcIcon, ModusWcButton } from '@trimble-oss/moduswebcomponents-react'
+import { ModusWcIcon, ModusWcButton } from '@trimble-oss/moduswebcomponents-react'
 import JobDetail, { type HubJob } from './JobDetail'
 
 const JOBS: HubJob[] = [
@@ -118,13 +118,6 @@ const JOBS: HubJob[] = [
   },
 ]
 
-const STATUS_COLOR: Record<HubJob['status'], 'success' | 'warning' | 'secondary' | 'primary'> = {
-  Active: 'success',
-  'On Hold': 'warning',
-  Completed: 'secondary',
-  Pending: 'primary',
-  Draft: 'secondary',
-}
 
 type JobTab = 'All' | 'Active' | 'On Hold' | 'Completed' | 'Draft'
 const JOB_TABS: JobTab[] = ['Active', 'On Hold', 'Draft', 'Completed', 'All']

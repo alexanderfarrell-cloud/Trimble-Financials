@@ -4,39 +4,7 @@ import { useNavigate, useSearchParams } from "react-router-dom"
 import { ModusWcIcon } from "@trimble-oss/moduswebcomponents-react"
 import { usePeriodsContext } from "../context/PeriodsContext"
 import type { FiscalPeriod } from "../data/periods"
-import { INVOICES } from "./BillingHub"
 
-type InvoiceAttentionStatus = "Overdue" | "Pending"
-
-type UnresolvedInvoiceRow = {
-  id: string
-  label: string
-  amount: number
-  path: string
-  status: InvoiceAttentionStatus
-}
-
-function getUnresolved(period: FiscalPeriod): UnresolvedInvoiceRow[] {
-  const start = new Date(period.startDate)
-  const end = new Date(period.endDate)
-  const inRange = (d: string) => {
-    const dt = new Date(d)
-    return dt >= start && dt <= end
-  }
-  return INVOICES.filter(
-    (i) => inRange(i.issuedDate) && (i.status === "Overdue" || i.status === "Pending")
-  ).map((i) => ({
-    id: i.id,
-    label: i.jobName,
-    amount: i.amount,
-    path: "/billing",
-    status: i.status as InvoiceAttentionStatus,
-  }))
-}
-
-function countUnresolved(period: FiscalPeriod): number {
-  return getUnresolved(period).length
-}
 
 function CalendarLockIllustration({ open = false }: { open?: boolean }) {
   return (
@@ -137,7 +105,6 @@ export default function ClosePeriodWizard() {
   const [selectedId, setSelectedId] = useState<string>(preselect ?? openPeriods[0]?.id ?? "")
   const [showConfirm, setShowConfirm] = useState(false)
   const selected = periods.find((p) => p.id === selectedId) ?? null
-  const unresolved = selected ? countUnresolved(selected) : 0
 
   const cancel = () => navigate("/periods")
 

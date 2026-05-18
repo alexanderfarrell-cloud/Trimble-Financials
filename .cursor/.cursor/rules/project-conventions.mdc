@@ -1,0 +1,12 @@
+---
+description: General coding conventions for the modus-analytics project
+alwaysApply: true
+---
+
+# Project Conventions
+
+- This is a React + TypeScript + Vite project using Trimble Modus Web Components
+- Use `@trimble-oss/moduswebcomponents-react` for all UI components
+- Follow Modus design system tokens for colors, spacing, and typography
+- Keep components small and focused — extract logic into custom hooks
+- Prefer named exports over default exports

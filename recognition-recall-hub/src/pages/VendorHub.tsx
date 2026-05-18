@@ -347,7 +347,7 @@ export default function VendorHub() {
                   <div className="vendor-card-name">{vendor.name}</div>
                   <div className="vendor-card-specialty">{vendor.specialty}</div>
                 </div>
-                <ModusWcBadge color={STATUS_COLOR[vendor.status]} size="sm" text={vendor.status} />
+                <ModusWcBadge color={STATUS_COLOR[vendor.status]} size="sm">{vendor.status}</ModusWcBadge>
               </div>
 
               {/* Rating */}

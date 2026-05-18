@@ -397,58 +397,6 @@ function JobStatCards({
   )
 }
 
-// ─── Milestone list panel ─────────────────────────────────────────────────────
-
-function MilestoneListPanel({
-  milestones,
-  onToggle,
-  onManage,
-}: {
-  milestones: MilestoneData[]
-  onToggle: (id: string) => void
-  onManage: () => void
-}) {
-  return (
-    <div className="milestone-list">
-      <div className="milestone-list-title-row">
-        <span className="milestone-list-title">Milestones</span>
-        <ModusWcButton size="sm" variant="borderless" color="secondary" onButtonClick={onManage}>
-          Manage
-        </ModusWcButton>
-      </div>
-      <div className="milestone-list-header">
-        <span />
-        <span>Milestone</span>
-        <span>Budget gate</span>
-        <span>Amount</span>
-        <span>Status</span>
-      </div>
-      {milestones.map(m => {
-        const badgeColor: 'success' | 'secondary' = m.isCompleted ? 'success' : 'secondary'
-        const statusLabel = m.isCompleted ? 'Completed' : 'Upcoming'
-        return (
-          <div key={m.id} className={`milestone-list-row${m.isCompleted ? ' milestone-list-row--done' : ''}`}>
-            <div className="milestone-list-check">
-              <ModusWcCheckbox
-                value={m.isCompleted}
-                size="sm"
-                aria-label={`Mark ${m.name} ${m.isCompleted ? 'incomplete' : 'complete'}`}
-                onInputChange={() => onToggle(m.id)}
-              />
-            </div>
-            <span className="milestone-list-name">{m.name}</span>
-            <span className="milestone-list-budget">{m.budgetPct}%</span>
-            <span className="milestone-list-budget">{fmt(m.budgetAmount)}</span>
-            <div className="milestone-list-badge">
-              <ModusWcBadge color={badgeColor} size="sm" text={statusLabel} />
-            </div>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
 // ─── Milestone side panel ─────────────────────────────────────────────────────
 
 const INPUT_STYLE: React.CSSProperties = {
@@ -1059,7 +1007,7 @@ export default function JobDetail({ job }: { job: HubJob }) {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          <ModusWcBadge color={STATUS_COLOR[job.status]} size="sm" text={job.status} />
+          <ModusWcBadge color={STATUS_COLOR[job.status]} size="sm">{job.status}</ModusWcBadge>
           <span style={{ fontSize: '0.75rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>{job.id}</span>
         </div>
         <ModusWcTypography hierarchy="h1" size="xl" weight="bold" label={job.name} />

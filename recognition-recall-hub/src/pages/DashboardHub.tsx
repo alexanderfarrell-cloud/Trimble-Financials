@@ -79,12 +79,6 @@ const RECENT_JOBS = [
   },
 ]
 
-const JOB_STATUS_COLOR: Record<string, 'success' | 'warning' | 'secondary' | 'primary'> = {
-  Active: 'success',
-  'On Hold': 'warning',
-  Completed: 'secondary',
-  Draft: 'secondary',
-}
 
 function progColor(pct: number) {
   if (pct >= 90) return 'var(--modus-wc-color-danger, #da212c)'
@@ -103,12 +97,6 @@ const EXPENSE_CATEGORY_COLOR: Record<string, string> = {
   Other:         'var(--modus-wc-color-base-content-low-contrast)',
 }
 
-const EXPENSE_STATUS_COLOR: Record<string, 'success' | 'warning' | 'danger' | 'secondary'> = {
-  Approved: 'success',
-  Pending:  'warning',
-  Rejected: 'danger',
-  Draft:    'secondary',
-}
 
 const RECENT_EXPENSES = [
   {
@@ -145,13 +133,6 @@ const RECENT_EXPENSES = [
 
 // ─── Recent Billing data ──────────────────────────────────────────────────────
 
-const BILLING_STATUS_COLOR: Record<string, 'danger' | 'warning' | 'primary' | 'success' | 'secondary'> = {
-  Overdue:  'danger',
-  Pending:  'warning',
-  Approved: 'primary',
-  Paid:     'success',
-  Draft:    'secondary',
-}
 
 const RECENT_INVOICES = [
   {
@@ -484,7 +465,7 @@ const STAT_CARDS = [
 // ─── DashboardHub ─────────────────────────────────────────────────────────────
 
 function TodoActionDropdown({
-  primaryLabel, primaryPath, secondaryLabel, secondaryPath, color = 'danger',
+  primaryLabel, primaryPath, secondaryLabel, secondaryPath, color: _color = 'danger',
 }: {
   primaryLabel: string; primaryPath: string
   secondaryLabel: string; secondaryPath: string

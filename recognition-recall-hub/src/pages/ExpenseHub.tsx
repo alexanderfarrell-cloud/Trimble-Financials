@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { ModusWcBadge, ModusWcIcon } from '@trimble-oss/moduswebcomponents-react'
 
 type ExpenseStatus = 'Approved' | 'Pending' | 'Rejected' | 'Draft'
@@ -144,19 +144,6 @@ function parseDateMs(d: string): number {
   return new Date(d).getTime()
 }
 
-function getCategoryTotals(expenses: Expense[]): { category: ExpenseCategory; total: number; pct: number }[] {
-  const map: Partial<Record<ExpenseCategory, number>> = {}
-  let grand = 0
-  for (const e of expenses) {
-    map[e.category] = (map[e.category] ?? 0) + e.amount
-    grand += e.amount
-  }
-  const cats: ExpenseCategory[] = ['Labor', 'Materials', 'Equipment', 'Subcontractor', 'Travel', 'Other']
-  return cats
-    .filter((c) => (map[c] ?? 0) > 0)
-    .map((c) => ({ category: c, total: map[c]!, pct: Math.round(((map[c] ?? 0) / grand) * 100) }))
-    .sort((a, b) => b.total - a.total)
-}
 
 export default function ExpenseHub() {
   const [activeTab, setActiveTab] = useState<Tab>('All')
@@ -348,7 +335,7 @@ export default function ExpenseHub() {
                       {/* Submitted by */}
                       <span className="text-muted">{exp.submittedBy}</span>
                     </div>
-                    <ModusWcBadge color={STATUS_COLOR[exp.status]} size="sm" text={exp.status} />
+                    <ModusWcBadge color={STATUS_COLOR[exp.status]} size="sm">{exp.status}</ModusWcBadge>
                   </div>
                 </div>
               </div>

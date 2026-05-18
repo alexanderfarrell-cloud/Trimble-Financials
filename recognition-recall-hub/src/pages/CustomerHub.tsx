@@ -148,17 +148,6 @@ const CUSTOMERS: Customer[] = [
   },
 ]
 
-const TYPE_COLOR: Record<CustomerType, 'primary' | 'secondary' | 'success' | 'warning'> = {
-  'General Contractor': 'primary',
-  Government: 'secondary',
-  Developer: 'success',
-  Owner: 'warning',
-}
-
-const STATUS_COLOR: Record<CustomerStatus, 'success' | 'warning'> = {
-  Active: 'success',
-  Draft: 'warning',
-}
 
 type CustTab = 'All' | 'Active' | 'Draft'
 const CUST_TABS: CustTab[] = ['All', 'Active', 'Draft']
@@ -182,7 +171,7 @@ const CUSTOMER_MENU_ITEMS = [
   { label: 'Archive',            color: 'var(--modus-wc-color-danger, #da212c)' },
 ]
 
-function CustomerCardMenu({ customerId }: { customerId: string }) {
+function CustomerCardMenu({ customerId: _customerId }: { customerId: string }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -434,8 +423,7 @@ export default function CustomerHub() {
                       <ModusWcBadge
                         color={job.status === 'Active' ? 'success' : job.status === 'On Hold' ? 'warning' : 'secondary'}
                         size="sm"
-                        text={job.status}
-                      />
+                      >{job.status}</ModusWcBadge>
                     </div>
                   ))}
                 </div>

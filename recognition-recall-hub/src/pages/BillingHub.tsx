@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { ModusWcBadge, ModusWcIcon } from '@trimble-oss/moduswebcomponents-react'
+import { ModusWcIcon } from '@trimble-oss/moduswebcomponents-react'
 
 type InvoiceStatus = 'Overdue' | 'Pending' | 'Approved' | 'Paid' | 'Draft'
 
@@ -97,13 +97,6 @@ export const INVOICES: Invoice[] = [
   },
 ]
 
-const STATUS_COLOR: Record<InvoiceStatus, 'danger' | 'warning' | 'primary' | 'success' | 'secondary'> = {
-  Overdue: 'danger',
-  Pending: 'warning',
-  Approved: 'primary',
-  Paid: 'success',
-  Draft: 'secondary',
-}
 
 type Tab = 'All' | 'Pending' | 'Overdue' | 'Paid' | 'Draft'
 const TABS: Tab[] = ['All', 'Pending', 'Overdue', 'Paid', 'Draft']
@@ -126,16 +119,9 @@ function parseDateMs(d: string): number {
   return new Date(d).getTime()
 }
 
-const STATUS_STRIP: Record<InvoiceStatus, string> = {
-  Overdue:  'var(--modus-wc-color-danger, #da212c)',
-  Pending:  'var(--modus-wc-color-warning, #fbad26)',
-  Approved: 'var(--modus-wc-color-primary)',
-  Paid:     'var(--modus-wc-color-success, #006638)',
-  Draft:    'var(--modus-wc-color-base-300, #b0b8c1)',
-}
 
 
-function InvoiceCardMenu({ invoiceId, open, onOpen, onClose }: {
+function InvoiceCardMenu({ invoiceId: _invoiceId, open, onOpen, onClose }: {
   invoiceId: string; open: boolean; onOpen: () => void; onClose: () => void
 }) {
   const ref = useRef<HTMLDivElement>(null)
