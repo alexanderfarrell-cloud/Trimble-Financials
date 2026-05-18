@@ -63,18 +63,11 @@ export default function PeriodWorkspacePage() {
 
   return (
     <div className="hub-page">
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0 }}>
+      <div style={{ flexShrink: 0 }}>
         <h1 className="hub-title">
           <ModusWcIcon name="calendar_today" size="md" decorative />
           Fiscal Periods
         </h1>
-        <button
-          aria-label="Back to Accounting"
-          onClick={() => navigate('/accounting')}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 6, borderRadius: 6, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--modus-wc-color-base-content-low-contrast)' }}
-        >
-          <ModusWcIcon name="close" size="md" decorative />
-        </button>
       </div>
 
       <p style={{ margin: 0, fontSize: "0.8125rem", color: "var(--modus-wc-color-base-content-low-contrast)" }}>
@@ -109,6 +102,15 @@ export default function PeriodWorkspacePage() {
           </div>
         </div>
       ))}
+
+      <div style={{ paddingTop: "0.5rem" }}>
+        <button
+          onClick={() => navigate('/accounting')}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Open Sans, sans-serif', fontSize: '0.875rem', fontWeight: 600, color: 'var(--modus-wc-color-primary)', textDecoration: 'underline', padding: 0 }}
+        >
+          Back to Accounting
+        </button>
+      </div>
     </div>
   )
 }

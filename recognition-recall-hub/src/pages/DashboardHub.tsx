@@ -530,8 +530,9 @@ function TodoActionDropdown({
 function TodoSection() {
   const navigate = useNavigate()
   const { periods } = usePeriodsContext()
+  const [showExtra, setShowExtra] = useState(false)
   const all = getPendingClosePeriods(periods)
-  const visible = all.slice(0, 3)
+  const visible = all.slice(0, 1)
   if (!visible.length) return null
   return (
     <div style={{
@@ -549,123 +550,129 @@ function TodoSection() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <ModusWcIcon name="check_circle" size="sm" decorative />
           <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--modus-wc-color-base-content)' }}>To Do</span>
-          <span style={{ padding: '1px 7px', borderRadius: 99, background: 'var(--modus-wc-color-primary)', color: '#fff', fontSize: '0.65rem', fontWeight: 700 }}>{all.length + 4}</span>
         </div>
-        <button
-          onClick={() => navigate('/periods')}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, color: 'var(--modus-wc-color-primary)', fontFamily: 'inherit', padding: '2px 0' }}
-        >
-          View All
-        </button>
-      </div>
-      {/* Upcoming close reminder — friendly tone */}
-      <div style={{
-        padding: '0.75rem 1rem',
-        borderBottom: '1px solid var(--modus-wc-color-base-200)',
-        display: 'flex', alignItems: 'center', gap: 12,
-      }}>
-        <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'color-mix(in srgb, var(--modus-wc-color-primary) 12%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <ModusWcIcon name="trending_up" size="xs" decorative style={{ color: 'var(--modus-wc-color-primary)' } as React.CSSProperties} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button
+            onClick={() => setShowExtra(v => !v)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600, color: 'var(--modus-wc-color-base-content-low-contrast)', fontFamily: 'inherit', padding: '2px 0', textDecoration: 'underline' }}
+          >
+            {showExtra ? 'Hide extra' : 'Show extra'}
+          </button>
         </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 600, fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content)', marginBottom: 2 }}>
-            Almost there — 14 items left before May wraps up
-          </div>
-          <div style={{ fontSize: '0.72rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>
-            You're 10 days from closing May. Knock out these 14 open invoices and payments so your books stay clean when the period closes.
-          </div>
-        </div>
-        <button
-          onClick={() => navigate('/billing')}
-          style={{ padding: '0.3rem 0.75rem', borderRadius: 99, border: '1px solid var(--modus-wc-color-primary)', background: 'transparent', color: 'var(--modus-wc-color-primary)', fontFamily: 'Open Sans, sans-serif', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}
-        >
-          See what's open
-        </button>
-      </div>
-      {/* Job costing warning card — minimal */}
-      <div style={{
-        padding: '0.75rem 1rem',
-        borderBottom: '1px solid var(--modus-wc-color-base-200)',
-        display: 'flex', alignItems: 'center', gap: 12,
-      }}>
-        <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 18%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <ModusWcIcon name="warning" size="xs" decorative style={{ color: '#7a5200' } as React.CSSProperties} />
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 600, fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content)', marginBottom: 2 }}>
-            May 2026 is ending soon
-          </div>
-          <div style={{ fontSize: '0.72rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>
-            $156,800 outstanding. Collect before May 31 or the income rolls into next month.
-          </div>
-        </div>
-        <TodoActionDropdown
-          primaryLabel="Review invoices"
-          primaryPath="/billing"
-          secondaryLabel="Close period"
-          secondaryPath="/periods/close?id=2026-05"
-          color="warning"
-        />
-      </div>
-      {/* Single-job missing expenses spotlight */}
-      <div style={{
-        padding: '0.75rem 1rem',
-        borderBottom: '1px solid var(--modus-wc-color-base-200)',
-        display: 'flex', alignItems: 'center', gap: 12,
-      }}>
-        <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 18%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <ModusWcIcon name="assignment" size="xs" decorative style={{ color: '#7a5200' } as React.CSSProperties} />
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 600, fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content)', marginBottom: 2 }}>
-            Riverside Commons — no expenses logged this month
-          </div>
-          <div style={{ fontSize: '0.72rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>
-            $12,000 budgeted but nothing recorded yet. Did work happen that wasn't logged?
-          </div>
-        </div>
-        <TodoActionDropdown
-          primaryLabel="Check job"
-          primaryPath="/jobs"
-          secondaryLabel="Close period"
-          secondaryPath="/periods/close?id=2026-05"
-          color="warning"
-        />
       </div>
 
-      {/* Summary — multiple jobs with no expenses */}
-      <div style={{
-        padding: '0.75rem 1rem',
-        borderBottom: '1px solid var(--modus-wc-color-base-200)',
-        display: 'flex', alignItems: 'center', gap: 12,
-      }}>
-        <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 18%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-          <ModusWcIcon name="list" size="xs" decorative style={{ color: '#7a5200' } as React.CSSProperties} />
-        </div>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontWeight: 600, fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content)', marginBottom: 2 }}>
-            3 active jobs have no expenses logged this month
+      {/* Extra cards — hidden for MVP */}
+      {showExtra && (
+        <>
+          {/* Upcoming close reminder — friendly tone */}
+          <div style={{
+            padding: '0.75rem 1rem',
+            borderBottom: '1px solid var(--modus-wc-color-base-200)',
+            display: 'flex', alignItems: 'center', gap: 12,
+          }}>
+            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'color-mix(in srgb, var(--modus-wc-color-primary) 12%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <ModusWcIcon name="calendar_today" size="xs" decorative style={{ color: 'var(--modus-wc-color-primary)' } as React.CSSProperties} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 600, fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content)', marginBottom: 2 }}>
+                May is coming to a close
+              </div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>
+                Review your open items and close the period when you're ready to lock your books.
+              </div>
+            </div>
+            <button
+              onClick={() => navigate('/periods')}
+              style={{ padding: '0.3rem 0.75rem', borderRadius: 99, border: '1px solid var(--modus-wc-color-primary)', background: 'transparent', color: 'var(--modus-wc-color-primary)', fontFamily: 'Open Sans, sans-serif', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}
+            >
+              Review period
+            </button>
           </div>
-          <div style={{ fontSize: '0.72rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>
-            $28,500 budgeted across these jobs. Worth a quick check before May closes.
+          {/* Job costing warning card — minimal */}
+          <div style={{
+            padding: '0.75rem 1rem',
+            borderBottom: '1px solid var(--modus-wc-color-base-200)',
+            display: 'flex', alignItems: 'center', gap: 12,
+          }}>
+            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 18%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <ModusWcIcon name="warning" size="xs" decorative style={{ color: '#7a5200' } as React.CSSProperties} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 600, fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content)', marginBottom: 2 }}>
+                May 2026 is ending soon
+              </div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>
+                $156,800 outstanding. Collect before May 31 or the income rolls into next month.
+              </div>
+            </div>
+            <TodoActionDropdown
+              primaryLabel="Review invoices"
+              primaryPath="/billing"
+              secondaryLabel="Close period"
+              secondaryPath="/periods/close?id=2026-05"
+              color="warning"
+            />
           </div>
-        </div>
-        <TodoActionDropdown
-          primaryLabel="Review jobs"
-          primaryPath="/jobs"
-          secondaryLabel="Close period"
-          secondaryPath="/periods/close?id=2026-05"
-          color="warning"
-        />
-      </div>
+          {/* Single-job missing expenses spotlight */}
+          <div style={{
+            padding: '0.75rem 1rem',
+            borderBottom: '1px solid var(--modus-wc-color-base-200)',
+            display: 'flex', alignItems: 'center', gap: 12,
+          }}>
+            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 18%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <ModusWcIcon name="assignment" size="xs" decorative style={{ color: '#7a5200' } as React.CSSProperties} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 600, fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content)', marginBottom: 2 }}>
+                Riverside Commons — no expenses logged this month
+              </div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>
+                $12,000 budgeted but nothing recorded yet. Did work happen that wasn't logged?
+              </div>
+            </div>
+            <TodoActionDropdown
+              primaryLabel="Check job"
+              primaryPath="/jobs"
+              secondaryLabel="Close period"
+              secondaryPath="/periods/close?id=2026-05"
+              color="warning"
+            />
+          </div>
+          {/* Summary — multiple jobs with no expenses */}
+          <div style={{
+            padding: '0.75rem 1rem',
+            borderBottom: '1px solid var(--modus-wc-color-base-200)',
+            display: 'flex', alignItems: 'center', gap: 12,
+          }}>
+            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 18%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <ModusWcIcon name="list" size="xs" decorative style={{ color: '#7a5200' } as React.CSSProperties} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 600, fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content)', marginBottom: 2 }}>
+                3 active jobs have no expenses logged this month
+              </div>
+              <div style={{ fontSize: '0.72rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>
+                $28,500 budgeted across these jobs. Worth a quick check before May closes.
+              </div>
+            </div>
+            <TodoActionDropdown
+              primaryLabel="Review jobs"
+              primaryPath="/jobs"
+              secondaryLabel="Close period"
+              secondaryPath="/periods/close?id=2026-05"
+              color="warning"
+            />
+          </div>
+        </>
+      )}
 
-      {/* Period-close rows */}
-      {visible.map((p, i) => (
+      {/* MVP card — single period-close row */}
+      {visible.map((p) => (
         <div
           key={p.id}
           style={{
             padding: '0.75rem 1rem',
-            borderBottom: i === visible.length - 1 ? 'none' : '1px solid var(--modus-wc-color-base-200)',
+            borderBottom: 'none',
             display: 'flex', alignItems: 'center', gap: 12,
           }}
         >

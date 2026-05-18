@@ -4,17 +4,38 @@ import { useNavigate, useSearchParams } from "react-router-dom"
 import { ModusWcIcon } from "@trimble-oss/moduswebcomponents-react"
 import { usePeriodsContext } from "../context/PeriodsContext"
 import type { FiscalPeriod } from "../data/periods"
-import { EXPENSES } from "./ExpenseHub"
 import { INVOICES } from "./BillingHub"
 
-function countUnresolved(period: FiscalPeriod): number {
+type InvoiceAttentionStatus = "Overdue" | "Pending"
+
+type UnresolvedInvoiceRow = {
+  id: string
+  label: string
+  amount: number
+  path: string
+  status: InvoiceAttentionStatus
+}
+
+function getUnresolved(period: FiscalPeriod): UnresolvedInvoiceRow[] {
   const start = new Date(period.startDate)
   const end = new Date(period.endDate)
-  const inRange = (d: string) => { const dt = new Date(d); return dt >= start && dt <= end }
-  return (
-    EXPENSES.filter((e) => inRange(e.date) && (e.status === "Draft" || e.status === "Pending")).length +
-    INVOICES.filter((i) => inRange(i.issuedDate) && (i.status === "Draft" || i.status === "Pending")).length
-  )
+  const inRange = (d: string) => {
+    const dt = new Date(d)
+    return dt >= start && dt <= end
+  }
+  return INVOICES.filter(
+    (i) => inRange(i.issuedDate) && (i.status === "Overdue" || i.status === "Pending")
+  ).map((i) => ({
+    id: i.id,
+    label: i.jobName,
+    amount: i.amount,
+    path: "/billing",
+    status: i.status as InvoiceAttentionStatus,
+  }))
+}
+
+function countUnresolved(period: FiscalPeriod): number {
+  return getUnresolved(period).length
 }
 
 function CalendarLockIllustration({ open = false }: { open?: boolean }) {
@@ -68,7 +89,6 @@ function WizardShell({
           {showBack && (
             <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "Open Sans, sans-serif", fontSize: "0.875rem", color: "var(--modus-wc-color-primary)", textDecoration: "underline", padding: 0 }}>Back</button>
           )}
-          <button onClick={onCancel} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "Open Sans, sans-serif", fontSize: "0.875rem", color: "var(--modus-wc-color-primary)", textDecoration: "underline", padding: 0 }}>Back to dashboard</button>
         </div>
         {nextLabel === "→" ? (
           <button
@@ -115,10 +135,15 @@ export default function ClosePeriodWizard() {
   const preselect = params.get("id")
   const [step, setStep] = useState(preselect ? 2 : 1)
   const [selectedId, setSelectedId] = useState<string>(preselect ?? openPeriods[0]?.id ?? "")
+  const [showConfirm, setShowConfirm] = useState(false)
   const selected = periods.find((p) => p.id === selectedId) ?? null
   const unresolved = selected ? countUnresolved(selected) : 0
 
   const cancel = () => navigate("/periods")
+
+  const handleConfirmClose = () => {
+    if (selected) { closePeriod(selected.id); setShowConfirm(false); setStep(3) }
+  }
 
   if (step === 3) {
     return (
@@ -143,18 +168,56 @@ export default function ClosePeriodWizard() {
 
   if (step === 2) {
     return (
-      <WizardShell
-        title="Close a Period"
-        question={`Ready to close ${selected?.label ?? "this period"}?`}
-        illustration={<CalendarLockIllustration />}
-        onCancel={cancel}
-        onNext={() => { if (selected) { closePeriod(selected.id); setStep(3) } }}
-        nextLabel="confirm"
-        showBack
-        onBack={() => setStep(1)}
-      >
+      <>
+        {showConfirm && (
+          <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 200, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
+            <div style={{ background: "var(--modus-wc-color-base-page)", borderRadius: 16, padding: "2rem", maxWidth: 420, width: "100%", boxShadow: "0 8px 40px rgba(0,0,0,0.18)", position: "relative" }}>
+              <button
+                onClick={() => setShowConfirm(false)}
+                aria-label="Cancel"
+                style={{ position: "absolute", top: 16, right: 16, width: 32, height: 32, borderRadius: "50%", border: "2px solid var(--modus-wc-color-base-200)", background: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--modus-wc-color-base-content)" }}
+              >
+                <ModusWcIcon name="close" size="xs" decorative />
+              </button>
+              <div style={{ fontWeight: 300, fontSize: "1.125rem", color: "var(--modus-wc-color-base-content)", marginBottom: "0.75rem" }}>
+                Close {selected?.label}?
+              </div>
+              <p style={{ margin: "0 0 0.75rem", fontSize: "0.9375rem", color: "var(--modus-wc-color-base-content-low-contrast)", lineHeight: 1.6 }}>
+                Locks all transactions in <strong style={{ color: "var(--modus-wc-color-base-content)", fontWeight: 600 }}>{selected?.label}</strong>. You can re-open it later if needed.
+              </p>
+              <p style={{ margin: "0 0 1.5rem", fontSize: "0.875rem", color: "var(--modus-wc-color-base-content-low-contrast)", lineHeight: 1.6, padding: "0.75rem 1rem", background: "var(--modus-wc-color-base-100)", borderRadius: 8, border: "1px solid var(--modus-wc-color-base-200)" }}>
+                <strong style={{ color: "var(--modus-wc-color-base-content)", fontWeight: 600 }}>Reminder:</strong> unpaid invoices in this period will be rolled into the next period if they are not collected before you close.
+              </p>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
+                <button
+                  onClick={() => setShowConfirm(false)}
+                  style={{ padding: "0.625rem 1.5rem", borderRadius: 99, border: "none", background: "var(--modus-wc-color-base-200)", color: "var(--modus-wc-color-base-content)", fontFamily: "Open Sans, sans-serif", fontSize: "0.875rem", fontWeight: 600, cursor: "pointer" }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleConfirmClose}
+                  style={{ padding: "0.625rem 1.5rem", borderRadius: 99, border: "none", background: "var(--modus-wc-color-primary)", color: "#fff", fontFamily: "Open Sans, sans-serif", fontSize: "0.875rem", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
+                >
+                  <ModusWcIcon name="lock" size="xs" decorative />
+                  Yes, close period
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        <WizardShell
+          title="Close a Period"
+          question={`Ready to close ${selected?.label ?? "this period"}?`}
+          illustration={<CalendarLockIllustration />}
+          onCancel={cancel}
+          onNext={() => setShowConfirm(true)}
+          nextLabel="confirm"
+          showBack
+          onBack={() => navigate("/periods")}
+        >
         <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem", maxWidth: 440 }}>
-          <div style={{ background: "var(--modus-wc-color-base-100)", borderRadius: 10, padding: "1.25rem", display: "flex", alignItems: "center", gap: 14 }}>
+          <div style={{ background: "var(--modus-wc-color-base-page)", border: "1px solid var(--modus-wc-color-base-200)", borderRadius: 10, padding: "1.25rem", display: "flex", alignItems: "center", gap: 14 }}>
             <div style={{ width: 44, height: 44, borderRadius: "50%", background: "color-mix(in srgb, var(--modus-wc-color-primary) 10%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
               <ModusWcIcon name="calendar_today" size="sm" decorative style={{ color: "var(--modus-wc-color-primary)" } as React.CSSProperties} />
             </div>
@@ -168,97 +231,28 @@ export default function ClosePeriodWizard() {
             Closing this period will <strong>lock all transactions</strong> in {selected?.label}. Nothing can be created, edited, or deleted in a closed period.
           </p>
 
-          {unresolved > 0 && (
-            <div style={{ background: "color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 10%, transparent)", border: "1px solid color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 30%, transparent)", borderRadius: 10, padding: "1rem", display: "flex", gap: 12 }}>
-              <ModusWcIcon name="warning" size="sm" decorative style={{ color: "#7a5200", flexShrink: 0, marginTop: 2 } as React.CSSProperties} />
+          {(selected?.id === "2025-05" || selected?.id === "2025-06") && (
+            <div style={{
+              borderRadius: 10,
+              border: "1.5px solid color-mix(in srgb, var(--modus-wc-color-danger, #da212c) 35%, transparent)",
+              background: "color-mix(in srgb, var(--modus-wc-color-danger, #da212c) 8%, transparent)",
+              padding: "1.25rem 1.25rem 1.25rem 1rem",
+              display: "flex",
+              gap: 14,
+              alignItems: "flex-start",
+            }}>
+              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "color-mix(in srgb, var(--modus-wc-color-danger, #da212c) 15%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
+                <ModusWcIcon name="warning" size="sm" decorative style={{ color: "var(--modus-wc-color-danger, #da212c)" } as React.CSSProperties} />
+              </div>
               <div>
-                <div style={{ fontWeight: 700, fontSize: "0.875rem", color: "#7a5200", marginBottom: 4 }}>Heads up — {unresolved} unresolved transaction{unresolved !== 1 ? "s" : ""}</div>
-                <div style={{ fontSize: "0.8125rem", color: "#7a5200" }}>Some transactions in this period are still Draft or Pending. They will remain as-is after closing. You can still proceed.</div>
+                <div style={{ fontWeight: 700, fontSize: "0.9375rem", color: "var(--modus-wc-color-danger, #da212c)", marginBottom: 6 }}>
+                  Transactions in this period are not fully posted
+                </div>
+                <div style={{ fontSize: "0.8125rem", color: "var(--modus-wc-color-base-content)", lineHeight: 1.6 }}>
+                  Some invoices or payments are still open. Closing now will lock the books as-is. You can re-open this period later if corrections are needed.
+                </div>
               </div>
             </div>
-          )}
-
-          {selected?.id === "2026-05" && (
-            <>
-              {/* Single-job spotlight */}
-              <div style={{ border: "1px solid color-mix(in srgb, var(--modus-wc-color-danger, #da212c) 25%, transparent)", borderRadius: 10, padding: "1rem", display: "flex", gap: 12, alignItems: "flex-start", background: "color-mix(in srgb, var(--modus-wc-color-danger, #da212c) 5%, transparent)" }}>
-                <ModusWcIcon name="account_balance" size="sm" decorative style={{ color: "var(--modus-wc-color-danger, #da212c)", flexShrink: 0, marginTop: 2 } as React.CSSProperties} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 700, fontSize: "0.875rem", color: "var(--modus-wc-color-base-content)", marginBottom: 4 }}>
-                    Oak Street Landscaping — final invoice not collected
-                  </div>
-                  <div style={{ fontSize: "0.8125rem", color: "var(--modus-wc-color-base-content)", marginBottom: 10, lineHeight: 1.5 }}>
-                    You've logged <strong>$3,000</strong> in expenses this month but the <strong>$7,000</strong> final invoice hasn't been collected. Close May now and this job will show a <strong style={{ color: "var(--modus-wc-color-danger, #da212c)" }}>$3,000 loss</strong> on your reports — even though the work is done and the money is owed.
-                  </div>
-                  <div style={{ display: "flex", gap: 12 }}>
-                    <div style={{ flex: 1, background: "var(--modus-wc-color-base-page)", borderRadius: 8, padding: "0.625rem 0.75rem", textAlign: "center" }}>
-                      <div style={{ fontSize: "0.65rem", color: "var(--modus-wc-color-base-content-low-contrast)", marginBottom: 2 }}>Expenses logged</div>
-                      <div style={{ fontWeight: 700, fontSize: "1rem", color: "var(--modus-wc-color-base-content)" }}>$3,000</div>
-                    </div>
-                    <div style={{ flex: 1, background: "var(--modus-wc-color-base-page)", borderRadius: 8, padding: "0.625rem 0.75rem", textAlign: "center" }}>
-                      <div style={{ fontSize: "0.65rem", color: "var(--modus-wc-color-base-content-low-contrast)", marginBottom: 2 }}>Invoice uncollected</div>
-                      <div style={{ fontWeight: 700, fontSize: "1rem", color: "var(--modus-wc-color-danger, #da212c)" }}>$7,000</div>
-                    </div>
-                    <div style={{ flex: 1, background: "var(--modus-wc-color-base-page)", borderRadius: 8, padding: "0.625rem 0.75rem", textAlign: "center" }}>
-                      <div style={{ fontSize: "0.65rem", color: "var(--modus-wc-color-base-content-low-contrast)", marginBottom: 2 }}>Reported profit</div>
-                      <div style={{ fontWeight: 700, fontSize: "1rem", color: "var(--modus-wc-color-danger, #da212c)" }}>-$3,000</div>
-                    </div>
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
-                    <button
-                      onClick={() => navigate("/jobs")}
-                      style={{ display: "flex", alignItems: "center", gap: 4, background: "none", border: "none", cursor: "pointer", fontFamily: "Open Sans, sans-serif", fontSize: "0.8125rem", fontWeight: 600, color: "var(--modus-wc-color-primary)", padding: 0 }}
-                    >
-                      View job
-                      <ModusWcIcon name="open_in_new" size="xs" decorative style={{ color: "var(--modus-wc-color-primary)" } as React.CSSProperties} />
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* General job costing panel */}
-              <div style={{ border: "1px solid color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 35%, transparent)", borderRadius: 10, overflow: "hidden" }}>
-                <div style={{ background: "color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 8%, transparent)", padding: "0.75rem 1rem", display: "flex", gap: 10, alignItems: "flex-start", borderBottom: "1px solid color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 20%, transparent)" }}>
-                  <ModusWcIcon name="warning" size="sm" decorative style={{ color: "#7a5200", flexShrink: 0, marginTop: 1 } as React.CSSProperties} />
-                  <div>
-                    <div style={{ fontWeight: 700, fontSize: "0.875rem", color: "#7a5200", marginBottom: 2 }}>2 more jobs with uncollected invoices</div>
-                    <div style={{ fontSize: "0.8125rem", color: "var(--modus-wc-color-base-content)" }}>
-                      $156,800 in open invoices. These jobs will also show a loss if May closes before they're collected.
-                    </div>
-                  </div>
-                </div>
-                <div style={{ padding: "0.75rem 1rem", display: "flex", flexDirection: "column", gap: "0.625rem" }}>
-                  {[
-                    { job: "Downtown Tower — Phase 2",    spent: "$84,500",  uncollected: "$62,000" },
-                    { job: "Highway 89 Bridge Expansion", spent: "$52,300",  uncollected: "$94,800" },
-                  ].map((item) => (
-                    <div key={item.job} style={{ background: "var(--modus-wc-color-base-page)", borderRadius: 8, padding: "0.75rem", display: "flex", flexDirection: "column", gap: 8 }}>
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-                        <span style={{ fontSize: "0.8125rem", fontWeight: 600, color: "var(--modus-wc-color-base-content)", flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.job}</span>
-                        <button
-                          onClick={() => navigate("/jobs")}
-                          style={{ display: "flex", alignItems: "center", gap: 3, background: "none", border: "none", cursor: "pointer", fontFamily: "Open Sans, sans-serif", fontSize: "0.75rem", fontWeight: 600, color: "var(--modus-wc-color-primary)", padding: 0, flexShrink: 0 }}
-                          aria-label={`View job: ${item.job}`}
-                        >
-                          View job
-                          <ModusWcIcon name="open_in_new" size="xs" decorative style={{ color: "var(--modus-wc-color-primary)" } as React.CSSProperties} />
-                        </button>
-                      </div>
-                      <div style={{ display: "flex", gap: 8 }}>
-                        <div style={{ flex: 1, background: "var(--modus-wc-color-base-100)", borderRadius: 6, padding: "0.5rem 0.625rem" }}>
-                          <div style={{ fontSize: "0.65rem", color: "var(--modus-wc-color-base-content-low-contrast)", marginBottom: 2 }}>Spent</div>
-                          <div style={{ fontWeight: 700, fontSize: "0.875rem", color: "var(--modus-wc-color-base-content)" }}>{item.spent}</div>
-                        </div>
-                        <div style={{ flex: 1, background: "var(--modus-wc-color-base-100)", borderRadius: 6, padding: "0.5rem 0.625rem" }}>
-                          <div style={{ fontSize: "0.65rem", color: "var(--modus-wc-color-base-content-low-contrast)", marginBottom: 2 }}>Uncollected</div>
-                          <div style={{ fontWeight: 700, fontSize: "0.875rem", color: "var(--modus-wc-color-danger, #da212c)" }}>{item.uncollected}</div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </>
           )}
 
           <p style={{ margin: 0, fontSize: "0.8125rem", color: "var(--modus-wc-color-base-content-low-contrast)" }}>
@@ -266,6 +260,7 @@ export default function ClosePeriodWizard() {
           </p>
         </div>
       </WizardShell>
+      </>
     )
   }
 

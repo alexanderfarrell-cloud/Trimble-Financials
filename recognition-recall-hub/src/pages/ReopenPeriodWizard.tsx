@@ -58,14 +58,25 @@ function WizardShell({
           )}
           <button onClick={onCancel} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "Open Sans, sans-serif", fontSize: "0.875rem", color: "var(--modus-wc-color-primary)", textDecoration: "underline", padding: 0 }}>Back to dashboard</button>
         </div>
-        <button
-          onClick={onNext}
-          disabled={nextDisabled}
-          style={{ width: 52, height: 52, borderRadius: "50%", border: "none", background: nextDisabled ? "var(--modus-wc-color-base-200)" : "var(--modus-wc-color-primary)", color: nextDisabled ? "var(--modus-wc-color-base-content-low-contrast)" : "#fff", cursor: nextDisabled ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.25rem", transition: "background 0.15s" }}
-          aria-label={nextLabel}
-        >
-          {nextLabel === "confirm" ? <ModusWcIcon name="check" size="sm" decorative /> : <ModusWcIcon name="arrow_forward" size="sm" decorative />}
-        </button>
+        {nextLabel === "→" ? (
+          <button
+            onClick={onNext}
+            disabled={nextDisabled}
+            style={{ width: 52, height: 52, borderRadius: "50%", border: "none", background: nextDisabled ? "var(--modus-wc-color-base-200)" : "var(--modus-wc-color-primary)", color: nextDisabled ? "var(--modus-wc-color-base-content-low-contrast)" : "#fff", cursor: nextDisabled ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.15s" }}
+            aria-label="Next"
+          >
+            <ModusWcIcon name="arrow_forward" size="sm" decorative />
+          </button>
+        ) : (
+          <button
+            onClick={onNext}
+            disabled={nextDisabled}
+            style={{ padding: "0.625rem 1.5rem", borderRadius: 99, border: "none", background: nextDisabled ? "var(--modus-wc-color-base-200)" : "var(--modus-wc-color-primary)", color: nextDisabled ? "var(--modus-wc-color-base-content-low-contrast)" : "#fff", cursor: nextDisabled ? "not-allowed" : "pointer", fontFamily: "Open Sans, sans-serif", fontSize: "0.875rem", fontWeight: 700, display: "flex", alignItems: "center", gap: 8, transition: "background 0.15s" }}
+          >
+            <ModusWcIcon name="lock_open" size="xs" decorative />
+            {nextLabel}
+          </button>
+        )}
       </div>
     </div>
   )
@@ -92,6 +103,7 @@ export default function ReopenPeriodWizard() {
   const preselect = params.get("id")
   const [step, setStep] = useState(preselect ? 2 : 1)
   const [selectedId, setSelectedId] = useState<string>(preselect ?? closedPeriods[0]?.id ?? "")
+  const [showConfirm, setShowConfirm] = useState(false)
   const selected = periods.find((p) => p.id === selectedId) ?? null
 
   const cancel = () => navigate("/periods")
@@ -119,13 +131,51 @@ export default function ReopenPeriodWizard() {
 
   if (step === 2) {
     return (
-      <WizardShell
+      <>
+        {showConfirm && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="reopen-confirm-title"
+            style={{ position: "fixed", inset: 0, zIndex: 1000, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.45)" }}
+          >
+            <div style={{ background: "var(--modus-wc-color-base-page)", borderRadius: 14, padding: "2rem", maxWidth: 400, width: "90%", boxShadow: "0 8px 40px rgba(0,0,0,0.18)", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{ width: 40, height: 40, borderRadius: "50%", background: "color-mix(in srgb, var(--modus-wc-color-primary) 12%, transparent)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  <ModusWcIcon name="lock_open" size="sm" decorative style={{ color: "var(--modus-wc-color-primary)" } as React.CSSProperties} />
+                </div>
+                <div id="reopen-confirm-title" style={{ fontWeight: 700, fontSize: "1rem", color: "var(--modus-wc-color-base-content)" }}>
+                  Reopen {selected?.label}?
+                </div>
+              </div>
+              <p style={{ margin: 0, fontSize: "0.875rem", color: "var(--modus-wc-color-base-content-low-contrast)" }}>
+                This will allow transactions in <strong>{selected?.label}</strong> to be created, edited, or deleted again. You can close it again at any time.
+              </p>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+                <button
+                  onClick={() => setShowConfirm(false)}
+                  style={{ padding: "0.5rem 1.25rem", borderRadius: 99, border: "1px solid var(--modus-wc-color-base-200)", background: "transparent", color: "var(--modus-wc-color-base-content)", fontFamily: "Open Sans, sans-serif", fontSize: "0.875rem", fontWeight: 600, cursor: "pointer" }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => { if (selected) { reopenPeriod(selected.id); setShowConfirm(false); setStep(3) } }}
+                  style={{ padding: "0.5rem 1.25rem", borderRadius: 99, border: "none", background: "var(--modus-wc-color-primary)", color: "#fff", fontFamily: "Open Sans, sans-serif", fontSize: "0.875rem", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
+                >
+                  <ModusWcIcon name="lock_open" size="xs" decorative />
+                  Yes, reopen
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        <WizardShell
         title="Re-open a Period"
         question={`Re-open ${selected?.label ?? "this period"}?`}
         illustration={<CalendarUnlockIllustration />}
         onCancel={cancel}
-        onNext={() => { if (selected) { reopenPeriod(selected.id); setStep(3) } }}
-        nextLabel="confirm"
+        onNext={() => setShowConfirm(true)}
+        nextLabel="Reopen period"
         showBack
         onBack={() => setStep(1)}
       >
@@ -155,7 +205,8 @@ export default function ReopenPeriodWizard() {
             You can close this period again at any time.
           </p>
         </div>
-      </WizardShell>
+        </WizardShell>
+      </>
     )
   }
 

@@ -73,7 +73,17 @@ export const INVOICES: Invoice[] = [
     amount: 320_000,
     dueDate: 'Jun 1, 2025',
     issuedDate: 'May 1, 2025',
-    status: 'Draft',
+    status: 'Overdue',
+  },
+  {
+    id: 'INV-2025-0135',
+    jobName: 'Lakeside Residential Complex',
+    jobId: 'PRJ-2024-0044',
+    customer: 'Summit Development Corp',
+    amount: 42_500,
+    dueDate: 'Jun 15, 2025',
+    issuedDate: 'May 14, 2025',
+    status: 'Pending',
   },
   {
     id: 'INV-2025-0136',
