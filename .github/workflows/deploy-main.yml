@@ -1,0 +1,60 @@
+name: Deploy main to GitHub Pages
+
+on:
+  push:
+    branches:
+      - master
+    paths:
+      - 'recognition-recall-hub/**'
+
+concurrency:
+  group: pages-main
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: recognition-recall-hub/package-lock.json
+
+      - name: Install Dependencies
+        working-directory: recognition-recall-hub
+        run: npm ci
+
+      - name: Build
+        working-directory: recognition-recall-hub
+        run: npm run build -- --base=/Trimble-Financials/
+
+      - name: Checkout gh-pages
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Copy build to gh-pages root
+        run: |
+          rm -rf gh-pages/assets gh-pages/modus-wc gh-pages/images
+          cp -r recognition-recall-hub/dist/. gh-pages/
+
+      - name: Push to gh-pages
+        run: |
+          cd gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --staged --quiet || git commit -m "Deploy master to GitHub Pages"
+          git pull --rebase origin gh-pages
+          git push origin gh-pages
