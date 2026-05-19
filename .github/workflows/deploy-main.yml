@@ -46,7 +46,7 @@ jobs:
 
       - name: Copy build to gh-pages root
         run: |
-          rm -rf gh-pages/assets gh-pages/modus-wc gh-pages/images
+          find gh-pages -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
           cp -r recognition-recall-hub/dist/. gh-pages/
 
       - name: Push to gh-pages
