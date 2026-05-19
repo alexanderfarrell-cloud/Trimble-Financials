@@ -1,5 +1,4 @@
-﻿import React from "react"
-import { useNavigate } from "react-router-dom"
+﻿import { useNavigate } from "react-router-dom"
 import { ModusWcIcon } from "@trimble-oss/moduswebcomponents-react"
 import { usePeriodsContext } from "../context/PeriodsContext"
 import type { FiscalPeriod } from "../data/periods"
