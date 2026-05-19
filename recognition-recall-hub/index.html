@@ -31,6 +31,17 @@
       rel="stylesheet"
     />
 
+    <!-- GitHub Pages SPA: restore path from ?p= redirect -->
+    <script>
+      (function () {
+        var p = new URLSearchParams(window.location.search).get('p');
+        if (p) {
+          var base = '/Trimble-Financials';
+          window.history.replaceState(null, '', base + decodeURIComponent(p));
+        }
+      })();
+    </script>
+
     <!-- Inline theme bootstrap: prevents flash of unstyled content -->
     <script>
       (function () {
