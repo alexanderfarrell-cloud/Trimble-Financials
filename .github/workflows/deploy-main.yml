@@ -6,6 +6,8 @@ on:
       - master
     paths:
       - 'recognition-recall-hub/**'
+      - '.github/workflows/deploy-main.yml'
+  workflow_dispatch:
 
 concurrency:
   group: pages-main
