@@ -15,35 +15,30 @@ function MonthCard({ period }: { period: FiscalPeriod }) {
       padding: "1rem",
       background: isClosed ? "var(--modus-wc-color-base-100)" : "var(--modus-wc-color-base-page)",
       display: "flex", flexDirection: "column", gap: 10,
-      opacity: isClosed ? 0.75 : 1,
     }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <span style={{ fontSize: "1rem", fontWeight: 700, color: "var(--modus-wc-color-base-content)" }}>{monthShort}</span>
-        <ModusWcIcon
-          name={isClosed ? "lock" : "lock_open"}
-          size="xs"
-          decorative
-          style={{ color: isClosed ? "var(--modus-wc-color-base-content-low-contrast)" : "var(--modus-wc-color-success, #006638)" } as React.CSSProperties}
-        />
+        <span style={{
+          display: "inline-flex", alignItems: "center", padding: "2px 8px",
+          borderRadius: 99, fontSize: "0.65rem", fontWeight: 700,
+          background: isClosed ? "var(--modus-wc-color-base-200)" : "color-mix(in srgb, var(--modus-wc-color-success, #006638) 12%, transparent)",
+          color: isClosed ? "var(--modus-wc-color-base-content-low-contrast)" : "var(--modus-wc-color-success, #006638)",
+        }}>
+          {isClosed ? "Closed" : "Open"}
+        </span>
       </div>
-      <span style={{
-        display: "inline-flex", alignItems: "center", padding: "2px 8px",
-        borderRadius: 99, fontSize: "0.65rem", fontWeight: 700,
-        background: isClosed ? "var(--modus-wc-color-base-200)" : "color-mix(in srgb, var(--modus-wc-color-success, #006638) 12%, transparent)",
-        color: isClosed ? "var(--modus-wc-color-base-content-low-contrast)" : "var(--modus-wc-color-success, #006638)",
-        width: "fit-content",
-      }}>
-        {isClosed ? "Closed" : "Open"}
+      <span style={{ fontSize: "0.7rem", color: "var(--modus-wc-color-base-content-low-contrast)", lineHeight: 1.4 }}>
+        {period.startDate.slice(5).replace("-", "/")} – {period.endDate.slice(5).replace("-", "/")}
       </span>
       <button
         onClick={() => navigate(isClosed ? `/periods/reopen?id=${period.id}` : `/periods/close?id=${period.id}`)}
         style={{
           padding: "5px 0", borderRadius: 6, fontSize: "0.75rem", cursor: "pointer",
-          border: isClosed ? "1px solid var(--modus-wc-color-base-200)" : "1px solid var(--modus-wc-color-primary)",
+          border: "1px solid var(--modus-wc-color-primary)",
           background: "transparent",
-          color: isClosed ? "var(--modus-wc-color-base-content)" : "var(--modus-wc-color-primary)",
+          color: "var(--modus-wc-color-primary)",
           fontFamily: "Open Sans, sans-serif",
-          fontWeight: isClosed ? 400 : 600,
+          fontWeight: 600,
         }}
       >
         {isClosed ? "Re-open" : "Close"}
@@ -95,7 +90,7 @@ export default function PeriodWorkspacePage() {
       {years.map((year) => (
         <div key={year}>
           <h2 style={{ margin: "0 0 0.75rem", fontSize: "0.875rem", fontWeight: 700, color: "var(--modus-wc-color-base-content-low-contrast)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{year}</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: "0.75rem" }}>
+          <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
             {periods.filter((p) => p.year === year).map((period) => (
               <MonthCard key={period.id} period={period} />
             ))}
