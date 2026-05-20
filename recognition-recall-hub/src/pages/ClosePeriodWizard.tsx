@@ -213,7 +213,7 @@ export default function ClosePeriodWizard() {
               </div>
               <div>
                 <div style={{ fontWeight: 700, fontSize: "0.9375rem", color: "var(--modus-wc-color-danger, #da212c)", marginBottom: 6 }}>
-                  Transactions in this period are not fully posted
+                  You have open transactions
                 </div>
                 <div style={{ fontSize: "0.8125rem", color: "var(--modus-wc-color-base-content)", lineHeight: 1.6 }}>
                   Some invoices or payments are still open. Closing now will lock the books as-is. You can re-open this period later if corrections are needed.

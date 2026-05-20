@@ -56,7 +56,6 @@ function WizardShell({
           {showBack && (
             <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "Open Sans, sans-serif", fontSize: "0.875rem", color: "var(--modus-wc-color-primary)", textDecoration: "underline", padding: 0 }}>Back</button>
           )}
-          <button onClick={onCancel} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "Open Sans, sans-serif", fontSize: "0.875rem", color: "var(--modus-wc-color-primary)", textDecoration: "underline", padding: 0 }}>Back to dashboard</button>
         </div>
         {nextLabel === "→" ? (
           <button
@@ -177,7 +176,7 @@ export default function ReopenPeriodWizard() {
         onNext={() => setShowConfirm(true)}
         nextLabel="Reopen period"
         showBack
-        onBack={() => setStep(1)}
+        onBack={cancel}
       >
         <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem", maxWidth: 440 }}>
           <div style={{ background: "var(--modus-wc-color-base-100)", borderRadius: 10, padding: "1.25rem", display: "flex", alignItems: "center", gap: 14 }}>
