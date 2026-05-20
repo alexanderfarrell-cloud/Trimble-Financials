@@ -511,7 +511,7 @@ function TodoActionDropdown({
 function TodoSection() {
   const navigate = useNavigate()
   const { periods } = usePeriodsContext()
-  const [showExtra, setShowExtra] = useState(false)
+  // const [showExtra, setShowExtra] = useState(false)
   const all = getPendingClosePeriods(periods)
   const visible = all.slice(0, 1)
   if (!visible.length) return null
@@ -532,18 +532,18 @@ function TodoSection() {
           <ModusWcIcon name="check_circle" size="sm" decorative />
           <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--modus-wc-color-base-content)' }}>To Do</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        {/* <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button
             onClick={() => setShowExtra(v => !v)}
             style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 600, color: 'var(--modus-wc-color-base-content-low-contrast)', fontFamily: 'inherit', padding: '2px 0', textDecoration: 'underline' }}
           >
             {showExtra ? 'Hide extra' : 'Show extra'}
           </button>
-        </div>
+        </div> */}
       </div>
 
       {/* Extra cards — hidden for MVP */}
-      {showExtra && (
+      {false && (
         <>
           {/* Upcoming close reminder — friendly tone */}
           <div style={{
