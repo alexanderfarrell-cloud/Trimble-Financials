@@ -1003,6 +1003,11 @@ modus-wc-button i.modus-wc-icon {
   padding: 2rem;
 }
 
+.wizard-illustration-panel {
+  flex: 1;
+  min-width: 0;
+}
+
 /* Hide illustration panel and tighten padding on narrow screens */
 @media (max-width: 639px) {
   .wizard-illustration-panel {

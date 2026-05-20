@@ -46,7 +46,7 @@ function WizardShell({
 
       <div style={{ flex: 1, display: "flex", gap: 0, overflow: "hidden" }}>
         <div className="wizard-content" style={{ flex: 1, overflowY: "auto", minWidth: 0 }}>{children}</div>
-        <div className="wizard-illustration-panel" style={{ width: 320, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem" }}>
+        <div className="wizard-illustration-panel" style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "2rem" }}>
           {illustration}
         </div>
       </div>
