@@ -153,7 +153,7 @@ export default function ClosePeriodWizard() {
                 Locks all transactions in <strong style={{ color: "var(--modus-wc-color-base-content)", fontWeight: 600 }}>{selected?.label}</strong>. You can re-open it later if needed.
               </p>
               <p style={{ margin: "0 0 1.5rem", fontSize: "0.875rem", color: "var(--modus-wc-color-base-content-low-contrast)", lineHeight: 1.6, padding: "0.75rem 1rem", background: "var(--modus-wc-color-base-100)", borderRadius: 8, border: "1px solid var(--modus-wc-color-base-200)" }}>
-                <strong style={{ color: "var(--modus-wc-color-base-content)", fontWeight: 600 }}>Reminder:</strong> unpaid invoices in this period will be rolled into the next period if they are not collected before you close.
+                <strong style={{ color: "var(--modus-wc-color-base-content)", fontWeight: 600 }}>Reminder:</strong> unpaid and uncollected invoices in this period will be rolled over to the next period if they are not collected or paid.
               </p>
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
                 <button
