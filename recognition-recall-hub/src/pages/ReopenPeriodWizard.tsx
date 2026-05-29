@@ -118,7 +118,7 @@ export default function ReopenPeriodWizard() {
             {selected?.label} is now open
           </div>
           <div style={{ fontSize: "0.875rem", color: "var(--modus-wc-color-base-content-low-contrast)", maxWidth: 380 }}>
-            Transactions in {selected?.label} can be created and edited again. GL balances in adjacent periods will update automatically.
+            {selected?.label} is now unlocked. Any new or edited transactions will automatically update your current balances.
           </div>
         </div>
         <button onClick={() => navigate("/periods")} style={{ padding: "0.5rem 1.5rem", borderRadius: 99, border: "none", background: "var(--modus-wc-color-primary)", color: "#fff", fontFamily: "Open Sans, sans-serif", fontSize: "0.875rem", fontWeight: 600, cursor: "pointer" }}>
@@ -148,7 +148,7 @@ export default function ReopenPeriodWizard() {
                 </div>
               </div>
               <p style={{ margin: 0, fontSize: "0.875rem", color: "var(--modus-wc-color-base-content-low-contrast)" }}>
-                This will allow transactions in <strong>{selected?.label}</strong> to be created, edited, or deleted again. You can close it again at any time.
+                This will unlock <strong>{selected?.label}</strong>. Your other months stay safely locked. You can close it again at any time.
               </p>
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
                 <button
@@ -162,19 +162,19 @@ export default function ReopenPeriodWizard() {
                   style={{ padding: "0.5rem 1.25rem", borderRadius: 99, border: "none", background: "var(--modus-wc-color-primary)", color: "#fff", fontFamily: "Open Sans, sans-serif", fontSize: "0.875rem", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
                 >
                   <ModusWcIcon name="lock_open" size="xs" decorative />
-                  Yes, reopen
+                  Yes, Reopen Period
                 </button>
               </div>
             </div>
           </div>
         )}
         <WizardShell
-        title="Re-open a Period"
-        question={`Re-open ${selected?.label ?? "this period"}?`}
+        title="Reopen a Period"
+        question={`Reopen ${selected?.label ?? "this period"}?`}
         illustration={<CalendarUnlockIllustration />}
         onCancel={cancel}
         onNext={() => setShowConfirm(true)}
-        nextLabel="Reopen period"
+        nextLabel="Reopen Period"
         showBack
         onBack={cancel}
       >
@@ -190,13 +190,13 @@ export default function ReopenPeriodWizard() {
           </div>
 
           <p style={{ margin: 0, fontSize: "0.9375rem", color: "var(--modus-wc-color-base-content)" }}>
-            Re-opening this period will allow transactions in <strong>{selected?.label}</strong> to be created, edited, or deleted again.
+            Unlocking this period will allow transactions in <strong>{selected?.label}</strong> to be created and edited again.
           </p>
 
           <div style={{ background: "color-mix(in srgb, var(--modus-wc-color-primary) 6%, transparent)", border: "1px solid color-mix(in srgb, var(--modus-wc-color-primary) 20%, transparent)", borderRadius: 10, padding: "1rem", display: "flex", gap: 12 }}>
             <ModusWcIcon name="info" size="sm" decorative style={{ color: "var(--modus-wc-color-primary)", flexShrink: 0, marginTop: 2 } as React.CSSProperties} />
             <div style={{ fontSize: "0.8125rem", color: "var(--modus-wc-color-base-content)" }}>
-              Only <strong>{selected?.label}</strong> will be re-opened. Adjacent months stay unchanged. Any transactions entered will update your GL balance from this period forward.
+              This will only unlock <strong>{selected?.label}</strong>. Your other months will remain safely locked. Any new or edited transactions will automatically update your current balances.
             </div>
           </div>
 
@@ -211,8 +211,8 @@ export default function ReopenPeriodWizard() {
 
   return (
     <WizardShell
-      title="Re-open a Period"
-      question="Which month do you want to re-open?"
+      title="Reopen a Period"
+      question="Which month do you want to reopen?"
       illustration={<CalendarUnlockIllustration />}
       onCancel={cancel}
       onNext={() => setStep(2)}

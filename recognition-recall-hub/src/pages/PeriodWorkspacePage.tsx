@@ -40,7 +40,7 @@ function MonthCard({ period }: { period: FiscalPeriod }) {
           fontWeight: 600,
         }}
       >
-        {isClosed ? "Re-open" : "Close"}
+        {isClosed ? "Reopen" : "Close"}
       </button>
     </div>
   )
@@ -65,7 +65,7 @@ export default function PeriodWorkspacePage() {
       </div>
 
       <p style={{ margin: 0, fontSize: "0.8125rem", color: "var(--modus-wc-color-base-content-low-contrast)" }}>
-        Close months to lock your books. Re-open them any time to make corrections.
+        Close months to lock your books. Reopen them any time to make corrections.
       </p>
 
       <div className="kpi-row">

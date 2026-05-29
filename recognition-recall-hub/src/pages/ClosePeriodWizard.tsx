@@ -74,7 +74,7 @@ function WizardShell({
             style={{ padding: "0.625rem 1.5rem", borderRadius: 99, border: "none", background: nextDisabled ? "var(--modus-wc-color-base-200)" : "var(--modus-wc-color-primary)", color: nextDisabled ? "var(--modus-wc-color-base-content-low-contrast)" : "#fff", cursor: nextDisabled ? "not-allowed" : "pointer", fontFamily: "Open Sans, sans-serif", fontSize: "0.875rem", fontWeight: 700, display: "flex", alignItems: "center", gap: 8, transition: "background 0.15s" }}
           >
             <ModusWcIcon name="lock" size="xs" decorative />
-            Close period
+            Close Period
           </button>
         )}
       </div>
@@ -150,7 +150,7 @@ export default function ClosePeriodWizard() {
                 Close {selected?.label}?
               </div>
               <p style={{ margin: "0 0 0.75rem", fontSize: "0.9375rem", color: "var(--modus-wc-color-base-content-low-contrast)", lineHeight: 1.6 }}>
-                Locks all transactions in <strong style={{ color: "var(--modus-wc-color-base-content)", fontWeight: 600 }}>{selected?.label}</strong>. You can re-open it later if needed.
+                Locks all transactions in <strong style={{ color: "var(--modus-wc-color-base-content)", fontWeight: 600 }}>{selected?.label}</strong>. You can reopen it later if needed.
               </p>
               <p style={{ margin: "0 0 1.5rem", fontSize: "0.875rem", color: "var(--modus-wc-color-base-content-low-contrast)", lineHeight: 1.6, padding: "0.75rem 1rem", background: "var(--modus-wc-color-base-100)", borderRadius: 8, border: "1px solid var(--modus-wc-color-base-200)" }}>
                 <strong style={{ color: "var(--modus-wc-color-base-content)", fontWeight: 600 }}>Reminder:</strong> unpaid and uncollected invoices in this period will be rolled over to the next period if they are not collected or paid.
@@ -167,7 +167,7 @@ export default function ClosePeriodWizard() {
                   style={{ padding: "0.625rem 1.5rem", borderRadius: 99, border: "none", background: "var(--modus-wc-color-primary)", color: "#fff", fontFamily: "Open Sans, sans-serif", fontSize: "0.875rem", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
                 >
                   <ModusWcIcon name="lock" size="xs" decorative />
-                  Yes, close period
+                  Yes, Close Period
                 </button>
               </div>
             </div>
@@ -179,7 +179,7 @@ export default function ClosePeriodWizard() {
           illustration={<CalendarLockIllustration />}
           onCancel={cancel}
           onNext={() => setShowConfirm(true)}
-          nextLabel="confirm"
+          nextLabel="Close Period"
           showBack
           onBack={() => navigate("/periods")}
         >
@@ -216,14 +216,14 @@ export default function ClosePeriodWizard() {
                   You have open transactions
                 </div>
                 <div style={{ fontSize: "0.8125rem", color: "var(--modus-wc-color-base-content)", lineHeight: 1.6 }}>
-                  Some invoices or payments are still open. Closing now will lock the books as-is. You can re-open this period later if corrections are needed.
+                  Some invoices or payments are still open. Closing now will lock the books as-is. You can reopen this period later if corrections are needed.
                 </div>
               </div>
             </div>
           )}
 
           <p style={{ margin: 0, fontSize: "0.8125rem", color: "var(--modus-wc-color-base-content-low-contrast)" }}>
-            You can re-open this period any time if corrections are needed.
+            You can reopen this period any time if corrections are needed.
           </p>
         </div>
       </WizardShell>

@@ -589,7 +589,7 @@ function TodoSection() {
             <TodoActionDropdown
               primaryLabel="Review invoices"
               primaryPath="/billing"
-              secondaryLabel="Close period"
+              secondaryLabel="Close Period"
               secondaryPath="/periods/close?id=2026-05"
               color="warning"
             />
@@ -614,7 +614,7 @@ function TodoSection() {
             <TodoActionDropdown
               primaryLabel="Check job"
               primaryPath="/jobs"
-              secondaryLabel="Close period"
+              secondaryLabel="Close Period"
               secondaryPath="/periods/close?id=2026-05"
               color="warning"
             />
@@ -639,7 +639,7 @@ function TodoSection() {
             <TodoActionDropdown
               primaryLabel="Review jobs"
               primaryPath="/jobs"
-              secondaryLabel="Close period"
+              secondaryLabel="Close Period"
               secondaryPath="/periods/close?id=2026-05"
               color="warning"
             />
