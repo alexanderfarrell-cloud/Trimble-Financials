@@ -1,73 +1,75 @@
-# React + TypeScript + Vite
+# Trimble Financials Hub
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React + TypeScript + Vite prototype for Trimble's construction financial management app. Built with [Trimble Modus Web Components](https://modus-web-components.trimble.com/).
 
-Currently, two official plugins are available:
+Deployed on GitHub Pages at `/Trimble-Financials/`.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Getting started
 
-## React Compiler
+**Prerequisites:** Node.js LTS, Cursor IDE
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
+# → http://localhost:5173/
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Modus Web Components
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+This project uses `@trimble-oss/moduswebcomponents-react` v1.3.0-react19.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- [Modus component docs](https://modus-web-components.trimble.com/)
+- [Modus design system](https://modus.trimble.com/)
+
+**Reference page for Modus usage patterns in this project:** `src/pages/JobDetail.tsx`
+
+## Cursor + Modus MCP setup (team)
+
+The `.cursor/mcp.json` at the repo root configures the Modus Docs MCP server so Cursor's Agent can look up component props, events, and React wiring without leaving the IDE.
+
+**First-time setup:**
+
+1. Open this repo in Cursor
+2. Restart Cursor after pulling
+3. Go to **Settings → Tools & MCP** — confirm `modus-docs` shows as connected (green)
+4. If it shows red, click **Refresh** next to the server entry
+
+**Using it:** In Agent mode, ask questions like:
+- *"Look up `modus-wc-button` props for version 1.3.0"*
+- *"What's the React event for `modus-wc-select`?"*
+
+Always pass version **`1.3.0`** so the docs match the installed package.
+
+**Troubleshooting:** If `mcp.json` doesn't load on Windows, add the server manually via **Settings → Tools & MCP → Add new MCP server** using the same config from `.cursor/mcp.json`.
+
+## Project structure
+
 ```
+recognition-recall-hub/
+├── src/
+│   ├── pages/          # Route-level page components
+│   ├── context/        # React context (PeriodsContext)
+│   ├── data/           # Static data / seed data
+│   ├── hooks/          # Custom React hooks
+│   ├── App.tsx         # Routes
+│   ├── main.tsx        # Entry point + Modus setup
+│   └── index.css       # Modus global styles + Tailwind
+├── public/
+│   └── modus-web-components/
+│       └── modus-icons.css   # Modus icon font (jsDelivr CDN)
+└── index.html          # Theme bootstrap script
+```
+
+## Deploy
+
+- **Production (master):** GitHub Actions deploys to `gh-pages` branch → `/Trimble-Financials/`
+- **Branch previews:** push any non-master branch → `/Trimble-Financials/branches/<slug>/`
+
+## Scripts
+
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Local dev server |
+| `npm run build` | Production build |
+| `npm run lint` | ESLint |
+| `npm run preview` | Preview production build locally |

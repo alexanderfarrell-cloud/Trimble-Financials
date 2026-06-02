@@ -1,12 +1,59 @@
 ---
-description: General coding conventions for the modus-analytics project
+description: Coding conventions for the Trimble Financials Hub (recognition-recall-hub)
 alwaysApply: true
 ---
 
 # Project Conventions
 
-- This is a React + TypeScript + Vite project using Trimble Modus Web Components
-- Use `@trimble-oss/moduswebcomponents-react` for all UI components
-- Follow Modus design system tokens for colors, spacing, and typography
-- Keep components small and focused — extract logic into custom hooks
+## Stack
+
+- React + TypeScript + Vite
+- Modus Web Components: `@trimble-oss/moduswebcomponents-react` v1.3.0-react19
+- Tailwind CSS v4 (utility classes only — do not re-create design tokens)
+
+## Modus component compliance
+
+**Always use Modus components for interactive UI.** Do not build custom `<button>`, `<input>`, or layout primitives when a Modus component exists.
+
+| Need | Use |
+|------|-----|
+| Any button / action | `ModusWcButton` + `onButtonClick` |
+| Status indicators | `ModusWcBadge` |
+| Page / card headings | `ModusWcTypography` |
+| Content containers | `ModusWcCard` (with `bordered={false}`, `padding="compact"`) |
+| Icons | `ModusWcIcon` (valid Modus icon names only) |
+| Navbar | `ModusWcNavbar` — always present at app top |
+
+**Reference page for correct patterns:** `recognition-recall-hub/src/pages/JobDetail.tsx`
+- Uses `ModusWcCard`, `ModusWcTypography`, `ModusWcButton`, `ModusWcBadge` correctly
+- Treat this as the in-repo standard; do not copy inline-styled period wizard pages for UI patterns
+
+## Modus tokens — no hard-coded colours
+
+Always use CSS variables, never hex values for UI chrome:
+
+- `--modus-wc-color-base-page` / `base-100` / `base-200`
+- `--modus-wc-color-base-content` / `base-content-low-contrast`
+- `--modus-wc-color-primary`, `success`, `danger`, `warning`
+
+## Events
+
+- Buttons: `onButtonClick` (not raw `onClick` on `ModusWcButton`)
+- Text inputs: `onInputChange` → value via `e.detail?.target?.value`
+- Checkboxes / switches: `onInputChange` → `e.detail` is boolean
+
+## Modus MCP — look up props before guessing
+
+The `modus-docs` MCP server is configured in `.cursor/mcp.json`. Use it in Agent mode to verify component APIs:
+
+- Pass `version: "1.3.0"` (the base package version from `package.json`)
+- Ask: `get_modus_component_data` for component props/events/slots
+- Ask: `get_modus_implementation_data` for React wiring guides
+
+## Layout and structure
+
+- Keep components small — extract logic into custom hooks
 - Prefer named exports over default exports
+- One primary (`filled` + primary) button per page section maximum
+- Use `size="sm"` on `ModusWcButton`, `ModusWcBadge`, `ModusWcChip` by default
+- Card title controls use `size="xs"`; navbar slot controls use `size="md"`
