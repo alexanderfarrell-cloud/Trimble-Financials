@@ -6,7 +6,7 @@ on:
       - master
       - gh-pages
     paths:
-      - 'recognition-recall-hub/**'
+      - 'financials-hub/**'
 
 concurrency:
   group: branch-preview-${{ github.ref }}
@@ -31,10 +31,10 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
-          cache-dependency-path: recognition-recall-hub/package-lock.json
+          cache-dependency-path: financials-hub/package-lock.json
 
       - name: Install Dependencies
-        working-directory: recognition-recall-hub
+        working-directory: financials-hub
         run: npm ci
 
       - name: Compute branch slug
@@ -48,7 +48,7 @@ jobs:
           echo "base_path=/$REPO/branches/$SLUG/" >> "$GITHUB_OUTPUT"
 
       - name: Build
-        working-directory: recognition-recall-hub
+        working-directory: financials-hub
         run: npm run build -- --base=${{ steps.branch.outputs.base_path }}
 
       - name: Checkout gh-pages
@@ -63,7 +63,7 @@ jobs:
         run: |
           rm -rf gh-pages/branches/${{ steps.branch.outputs.slug }}
           mkdir -p gh-pages/branches/${{ steps.branch.outputs.slug }}
-          cp -r recognition-recall-hub/dist/. gh-pages/branches/${{ steps.branch.outputs.slug }}/
+          cp -r financials-hub/dist/. gh-pages/branches/${{ steps.branch.outputs.slug }}/
 
       - name: Push to gh-pages
         run: |

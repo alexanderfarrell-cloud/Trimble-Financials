@@ -24,7 +24,7 @@ alwaysApply: true
 | Icons | `ModusWcIcon` (valid Modus icon names only) |
 | Navbar | `ModusWcNavbar` — always present at app top |
 
-**Reference page for correct patterns:** `recognition-recall-hub/src/pages/JobDetail.tsx`
+**Reference page for correct patterns:** `financials-hub/src/pages/JobDetail.tsx`
 - Uses `ModusWcCard`, `ModusWcTypography`, `ModusWcButton`, `ModusWcBadge` correctly
 - Treat this as the in-repo standard; do not copy inline-styled period wizard pages for UI patterns
 

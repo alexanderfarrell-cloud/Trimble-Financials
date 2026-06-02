@@ -45,7 +45,7 @@ Always pass version **`1.3.0`** so the docs match the installed package.
 ## Project structure
 
 ```
-recognition-recall-hub/
+financials-hub/
 ├── src/
 │   ├── pages/          # Route-level page components
 │   ├── context/        # React context (PeriodsContext)
