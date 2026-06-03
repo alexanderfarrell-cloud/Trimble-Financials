@@ -7,6 +7,7 @@ on:
       - gh-pages
     paths:
       - 'financials-hub/**'
+      - 'mockups-hub/**'
 
 concurrency:
   group: branch-preview-${{ github.ref }}
@@ -31,9 +32,11 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
-          cache-dependency-path: financials-hub/package-lock.json
+          cache-dependency-path: |
+            financials-hub/package-lock.json
+            mockups-hub/package-lock.json
 
-      - name: Install Dependencies
+      - name: Install Dependencies (financials-hub)
         working-directory: financials-hub
         run: npm ci
 
@@ -46,10 +49,19 @@ jobs:
           echo "slug=$SLUG" >> "$GITHUB_OUTPUT"
           echo "name=$BRANCH" >> "$GITHUB_OUTPUT"
           echo "base_path=/$REPO/branches/$SLUG/" >> "$GITHUB_OUTPUT"
+          echo "mockups_base_path=/$REPO/branches/$SLUG/mockups/" >> "$GITHUB_OUTPUT"
 
-      - name: Build
+      - name: Build (financials-hub)
         working-directory: financials-hub
         run: npm run build -- --base=${{ steps.branch.outputs.base_path }}
+
+      - name: Install Dependencies (mockups-hub)
+        working-directory: mockups-hub
+        run: npm ci
+
+      - name: Build (mockups-hub)
+        working-directory: mockups-hub
+        run: npm run build -- --base=${{ steps.branch.outputs.mockups_base_path }}
 
       - name: Checkout gh-pages
         uses: actions/checkout@v4
@@ -59,11 +71,13 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Copy build to branch subdirectory
+      - name: Copy builds to branch subdirectory
         run: |
           rm -rf gh-pages/branches/${{ steps.branch.outputs.slug }}
           mkdir -p gh-pages/branches/${{ steps.branch.outputs.slug }}
           cp -r financials-hub/dist/. gh-pages/branches/${{ steps.branch.outputs.slug }}/
+          mkdir -p gh-pages/branches/${{ steps.branch.outputs.slug }}/mockups
+          cp -r mockups-hub/dist/. gh-pages/branches/${{ steps.branch.outputs.slug }}/mockups/
 
       - name: Push to gh-pages
         run: |
@@ -90,9 +104,9 @@ jobs:
             });
             if (prs.length === 0) return;
             const pr = prs[0];
-            const previewUrl = `https://${repo.owner}.github.io/${repo.repo}/branches/${slug}/`;
+            const baseUrl = `https://${repo.owner}.github.io/${repo.repo}/branches/${slug}`;
             const marker = '<!-- branch-deploy-preview -->';
-            const body = `${marker}\n**Preview:** ${previewUrl}`;
+            const body = `${marker}\n**Preview:** ${baseUrl}/\n**Mockups:** ${baseUrl}/mockups/`;
             const { data: comments } = await github.rest.issues.listComments({
               owner: repo.owner,
               repo: repo.repo,
@@ -113,4 +127,4 @@ jobs:
                 issue_number: pr.number,
                 body
               });
-            }
+        }

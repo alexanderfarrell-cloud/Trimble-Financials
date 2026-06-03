@@ -6,6 +6,7 @@ on:
       - master
     paths:
       - 'financials-hub/**'
+      - 'mockups-hub/**'
       - '.github/workflows/deploy-main.yml'
   workflow_dispatch:
 
@@ -28,15 +29,25 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
-          cache-dependency-path: financials-hub/package-lock.json
+          cache-dependency-path: |
+            financials-hub/package-lock.json
+            mockups-hub/package-lock.json
 
-      - name: Install Dependencies
+      - name: Install Dependencies (financials-hub)
         working-directory: financials-hub
         run: npm ci
 
-      - name: Build
+      - name: Build (financials-hub)
         working-directory: financials-hub
         run: npm run build -- --base=/Trimble-Financials/
+
+      - name: Install Dependencies (mockups-hub)
+        working-directory: mockups-hub
+        run: npm ci
+
+      - name: Build (mockups-hub)
+        working-directory: mockups-hub
+        run: npm run build -- --base=/Trimble-Financials/mockups/
 
       - name: Checkout gh-pages
         uses: actions/checkout@v4
@@ -46,10 +57,12 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Copy build to gh-pages root
+      - name: Copy builds to gh-pages
         run: |
-          find gh-pages -mindepth 1 -maxdepth 1 ! -name '.git' -exec rm -rf {} +
+          find gh-pages -mindepth 1 -maxdepth 1 ! -name '.git' ! -name 'branches' -exec rm -rf {} +
           cp -r financials-hub/dist/. gh-pages/
+          mkdir -p gh-pages/mockups
+          cp -r mockups-hub/dist/. gh-pages/mockups/
 
       - name: Push to gh-pages
         run: |

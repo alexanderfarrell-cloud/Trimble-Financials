@@ -1,0 +1,77 @@
+/* Modus CSS MUST come first */
+@import '@trimble-oss/moduswebcomponents/modus-wc-styles.css';
+@import 'tailwindcss';
+
+html,
+body {
+  font-family: 'Open Sans', sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+#root {
+  height: 100dvh;
+  max-height: 100dvh;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#root > modus-wc-theme-provider {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+}
+
+.app-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+#main-content {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background-color: var(--modus-wc-color-base-page);
+}
+
+.hub-page {
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 100%;
+  box-sizing: border-box;
+}
+
+/* Fix icon sizing inside buttons */
+i.modus-wc-icon {
+  width: fit-content !important;
+  height: fit-content !important;
+}
+
+button i.modus-wc-icon,
+modus-wc-button i.modus-wc-icon {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+:focus-visible {
+  outline: 2px solid var(--modus-wc-color-primary);
+  outline-offset: 2px;
+}
