@@ -301,7 +301,7 @@ function JobStatCards({
   const varianceFavorable = variance <= 0
 
   const [variancePopoverOpen, setVariancePopoverOpen] = useState(false)
-  const varianceAnchorRef = useRef<HTMLButtonElement>(null)
+  const varianceAnchorRef = useRef<HTMLDivElement>(null)
   const variancePopoverRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -327,7 +327,7 @@ function JobStatCards({
     <div className="job-stat-cards">
       {/* Milestones */}
       <div className="job-stat-card">
-        <span className="job-stat-card-label">Milestones</span>
+        <ModusWcTypography hierarchy="p" size="xs" weight="semibold" customClass="job-stat-card-label" label="Milestones" />
         <div className="job-stat-card-value-row">
           <span className="job-stat-card-value">{completedCount}&thinsp;/&thinsp;{milestones.length}</span>
           <ModusWcButton size="sm" variant="borderless" color="secondary" onButtonClick={onManage}>
@@ -343,7 +343,7 @@ function JobStatCards({
 
       {/* Budget Health */}
       <div className="job-stat-card">
-        <span className="job-stat-card-label">Budget Health</span>
+        <ModusWcTypography hierarchy="p" size="xs" weight="semibold" customClass="job-stat-card-label" label="Budget Health" />
         <div className="job-stat-card-value-row">
           <span className="job-stat-card-value" style={{ color: healthColor[health], fontSize: '1.1rem' }}>
             {(health === 'at-risk' || health === 'over-budget') && '⚠ '}
@@ -354,18 +354,20 @@ function JobStatCards({
       </div>
 
       {/* Variance */}
-      <div className="job-stat-card" style={{ position: 'relative' }}>
+      <div ref={varianceAnchorRef} className="job-stat-card" style={{ position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <span className="job-stat-card-label">Variance</span>
-          <button
-            ref={varianceAnchorRef}
-            className="variance-info-btn"
+          <ModusWcTypography hierarchy="p" size="xs" weight="semibold" customClass="job-stat-card-label" label="Variance" />
+          <ModusWcButton
+            variant="borderless"
+            color="secondary"
+            size="xs"
+            shape="circle"
             aria-label="Variance explanation"
             aria-expanded={variancePopoverOpen}
-            onClick={() => setVariancePopoverOpen(o => !o)}
+            onButtonClick={() => setVariancePopoverOpen(o => !o)}
           >
             <ModusWcIcon name="info" size="sm" decorative />
-          </button>
+          </ModusWcButton>
         </div>
         {variancePopoverOpen && (
           <div ref={variancePopoverRef} className="variance-popover">
@@ -697,11 +699,11 @@ function RevenueMarginCard({ job }: { job: HubJob }) {
         <div className="flex flex-col gap-1">
           <div className="flex items-baseline justify-between gap-2">
             <div className="flex flex-col">
-              <span className="label-muted">Current Revenue:</span>
+              <ModusWcTypography hierarchy="p" size="sm" customClass="label-muted" label="Current Revenue:" />
               <span className="amount-current">{fmt(revenue.current)}</span>
             </div>
             <div className="flex flex-col items-end">
-              <span className="label-muted">Estimate Revenue:</span>
+              <ModusWcTypography hierarchy="p" size="sm" customClass="label-muted" label="Estimate Revenue:" />
               <span className="amount-secondary">{fmt(revenue.estimate)}</span>
             </div>
           </div>
@@ -710,11 +712,11 @@ function RevenueMarginCard({ job }: { job: HubJob }) {
         <div className="flex flex-col gap-1">
           <div className="flex items-baseline justify-between gap-2">
             <div className="flex flex-col">
-              <span className="label-muted">Current Margin:</span>
+              <ModusWcTypography hierarchy="p" size="sm" customClass="label-muted" label="Current Margin:" />
               <span className="amount-current">{fmt(revenue.currentMargin)}</span>
             </div>
             <div className="flex flex-col items-end">
-              <span className="label-muted">Estimate Margin:</span>
+              <ModusWcTypography hierarchy="p" size="sm" customClass="label-muted" label="Estimate Margin:" />
               <span className="amount-secondary">{fmt(revenue.estimateMargin)}</span>
             </div>
           </div>
@@ -764,13 +766,13 @@ function CostDistributionCard({ job }: { job: HubJob }) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1.5">
             <span className="legend-dot-actual" />
-            <span className="label-body">Total Actual</span>
-            <span className="label-value">{fmt(job.costToDate)}</span>
+            <ModusWcTypography hierarchy="p" size="sm" label="Total Actual" />
+            <ModusWcTypography hierarchy="p" size="sm" weight="semibold" customClass="label-value" label={fmt(job.costToDate)} />
           </div>
           <div className="flex items-center gap-1.5">
             <span className="legend-dot-estimate" />
-            <span className="label-body">Total Estimate</span>
-            <span className="label-value">{fmt(job.projectedCost)}</span>
+            <ModusWcTypography hierarchy="p" size="sm" label="Total Estimate" />
+            <ModusWcTypography hierarchy="p" size="sm" weight="semibold" customClass="label-value" label={fmt(job.projectedCost)} />
           </div>
         </div>
 
@@ -841,7 +843,7 @@ function CashflowCard({ job }: { job: HubJob }) {
       </div>
       <div className="flex flex-col gap-3 pt-1">
         <div className="flex items-center justify-between gap-2">
-          <span className="label-body">Margin</span>
+          <ModusWcTypography hierarchy="p" size="sm" label="Margin" />
           <div className="flex items-center gap-2">
             <span className="amount-secondary">{fmt(margin)}</span>
             <span className="badge-success">
@@ -957,22 +959,17 @@ export default function JobDetail({ job }: { job: HubJob }) {
       <div className="job-header" style={{ position: 'relative' }}>
         {/* Action menu — top right */}
         <div ref={menuRef} style={{ position: 'absolute', top: 12, right: 12 }}>
-          <button
+          <ModusWcButton
             aria-label="Job actions"
             aria-expanded={menuOpen}
-            onClick={() => setMenuOpen((o) => !o)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '6px 12px', borderRadius: 6, cursor: 'pointer',
-              border: '1px solid var(--modus-wc-color-primary)',
-              background: 'transparent',
-              color: 'var(--modus-wc-color-primary)',
-              fontFamily: 'Open Sans, sans-serif', fontSize: '0.8125rem', fontWeight: 600,
-            }}
+            variant="outlined"
+            color="primary"
+            size="sm"
+            onButtonClick={() => setMenuOpen((o) => !o)}
           >
             Actions
             <ModusWcIcon name="expand_more" size="sm" decorative />
-          </button>
+          </ModusWcButton>
           {menuOpen && (
             <div
               role="menu"
@@ -1069,16 +1066,30 @@ export default function JobDetail({ job }: { job: HubJob }) {
 
       {/* Tabs */}
       <div className="tab-bar">
-        {TABS.map(tab => (
-          <button
-            key={tab.id}
-            className={`tab-btn${activeTab === tab.id ? ' tab-btn--active' : ''}`}
-            onClick={() => setActiveTab(tab.id)}
-          >
-            <ModusWcIcon name={tab.icon} size="sm" decorative />
-            {tab.label}
-          </button>
-        ))}
+        {TABS.map(tab => {
+          const isActive = activeTab === tab.id
+          return (
+            <div
+              key={tab.id}
+              style={{
+                borderBottom: isActive
+                  ? '2px solid var(--modus-wc-color-primary)'
+                  : '2px solid transparent',
+                marginBottom: '-1px',
+              }}
+            >
+              <ModusWcButton
+                variant="borderless"
+                color={isActive ? 'primary' : 'secondary'}
+                size="sm"
+                onButtonClick={() => setActiveTab(tab.id)}
+              >
+                <ModusWcIcon name={tab.icon} size="sm" decorative />
+                {tab.label}
+              </ModusWcButton>
+            </div>
+          )
+        })}
       </div>
 
       {/* Tab content */}
