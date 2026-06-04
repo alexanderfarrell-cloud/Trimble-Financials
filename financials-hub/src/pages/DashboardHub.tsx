@@ -1,33 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ModusWcIcon, ModusWcDropdownMenu, ModusWcMenuItem } from '@trimble-oss/moduswebcomponents-react'
+import { ModusWcIcon, ModusWcDropdownMenu, ModusWcMenuItem, ModusWcButton, ModusWcTypography } from '@trimble-oss/moduswebcomponents-react'
 import { usePeriodsContext } from '../context/PeriodsContext'
 import { getPendingClosePeriods } from '../data/periods'
 
 function MeatballMenu() {
   return (
-    <button
+    <ModusWcButton
       aria-label="More options"
-      style={{
-        background: 'none',
-        border: 'none',
-        cursor: 'pointer',
-        padding: '2px 6px',
-        borderRadius: 6,
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 3,
-        flexShrink: 0,
-        color: 'var(--modus-wc-color-base-content-low-contrast)',
-      }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--modus-wc-color-base-100)')}
-      onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+      size="sm"
+      shape="square"
+      variant="borderless"
+      color="tertiary"
+      customClass="flex-shrink-0"
     >
-      {[0, 1, 2].map((i) => (
-        <span key={i} style={{ width: 3, height: 3, borderRadius: '50%', background: 'currentColor', display: 'block' }} />
-      ))}
-    </button>
+      <ModusWcIcon name="more_vertical" size="sm" decorative />
+    </ModusWcButton>
   )
 }
 
@@ -187,23 +175,17 @@ function AddButton() {
 
   return (
     <div ref={ref} style={{ position: 'relative' }}>
-      <button
+      <ModusWcButton
         aria-label="Add"
         aria-expanded={open}
-        onClick={() => setOpen((o) => !o)}
-        style={{
-          display: 'flex', alignItems: 'center', gap: 6,
-          padding: '8px 16px', borderRadius: 99, cursor: 'pointer',
-          border: 'none',
-          background: 'var(--modus-wc-color-primary)',
-          color: '#fff',
-          fontFamily: 'Open Sans, sans-serif', fontSize: '0.875rem', fontWeight: 600,
-        }}
+        color="primary"
+        shape="ellipse"
+        onButtonClick={() => setOpen((o) => !o)}
       >
         <ModusWcIcon name="add" size="sm" decorative />
         Add
         <ModusWcIcon name="expand_more" size="sm" decorative />
-      </button>
+      </ModusWcButton>
       {open && (
         <div
           role="menu"
@@ -272,17 +254,14 @@ function Widget({
             {title}
           </span>
         </div>
-        <button
-          onClick={() => navigate(viewAllPath)}
-          style={{
-            background: 'none', border: 'none', cursor: 'pointer',
-            fontSize: '0.75rem', fontWeight: 600,
-            color: 'var(--modus-wc-color-primary)', fontFamily: 'inherit',
-            padding: '2px 0',
-          }}
+        <ModusWcButton
+          size="sm"
+          variant="borderless"
+          color="primary"
+          onButtonClick={() => navigate(viewAllPath)}
         >
           View All
-        </button>
+        </ModusWcButton>
       </div>
       {/* Widget body */}
       <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -668,12 +647,16 @@ function TodoSection() {
               Want to close and lock your books for this period?
             </div>
           </div>
-          <button
-            onClick={() => navigate(`/periods/close?id=${p.id}`)}
-            style={{ padding: '0.3rem 0.75rem', borderRadius: 99, border: '1px solid var(--modus-wc-color-primary)', background: 'transparent', color: 'var(--modus-wc-color-primary)', fontFamily: 'Open Sans, sans-serif', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}
+          <ModusWcButton
+            size="sm"
+            variant="outlined"
+            color="primary"
+            shape="ellipse"
+            customClass="flex-shrink-0"
+            onButtonClick={() => navigate(`/periods/close?id=${p.id}`)}
           >
             Close now
-          </button>
+          </ModusWcButton>
         </div>
       ))}
     </div>
@@ -686,10 +669,10 @@ export default function DashboardHub() {
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
         <div>
-          <h1 className="hub-title" style={{ marginBottom: 2 }}>
+          <div className="hub-title" style={{ marginBottom: 2 }}>
             <ModusWcIcon name="dashboard" size="md" decorative />
-            Dashboard
-          </h1>
+            <ModusWcTypography hierarchy="h1" size="xl" weight="bold" label="Dashboard" />
+          </div>
           <span style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>
             Welcome back, Alex Johnson
           </span>
@@ -702,7 +685,7 @@ export default function DashboardHub() {
         {STAT_CARDS.map(({ label, value, sub, color, icon }) => (
           <div key={label} className="kpi-card">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <span className="kpi-label">{label}</span>
+              <ModusWcTypography hierarchy="p" size="xs" weight="bold" customClass="kpi-label" label={label} />
               <ModusWcIcon name={icon} size="sm" decorative
                 style={{ color: 'var(--modus-wc-color-base-content-low-contrast)' } as React.CSSProperties}
               />
