@@ -1,5 +1,5 @@
 ﻿import { useNavigate } from "react-router-dom"
-import { ModusWcIcon } from "@trimble-oss/moduswebcomponents-react"
+import { ModusWcIcon, ModusWcButton, ModusWcTypography } from "@trimble-oss/moduswebcomponents-react"
 import { usePeriodsContext } from "../context/PeriodsContext"
 import type { FiscalPeriod } from "../data/periods"
 
@@ -29,19 +29,16 @@ function MonthCard({ period }: { period: FiscalPeriod }) {
       <span style={{ fontSize: "0.7rem", color: "var(--modus-wc-color-base-content-low-contrast)", lineHeight: 1.4 }}>
         {period.startDate.slice(5).replace("-", "/")} – {period.endDate.slice(5).replace("-", "/")}
       </span>
-      <button
-        onClick={() => navigate(isClosed ? `/periods/reopen?id=${period.id}` : `/periods/close?id=${period.id}`)}
-        style={{
-          padding: "5px 0", borderRadius: 6, fontSize: "0.75rem", cursor: "pointer",
-          border: "1px solid var(--modus-wc-color-primary)",
-          background: "transparent",
-          color: "var(--modus-wc-color-primary)",
-          fontFamily: "Open Sans, sans-serif",
-          fontWeight: 600,
-        }}
+      <ModusWcButton
+        onButtonClick={() => navigate(isClosed ? `/periods/reopen?id=${period.id}` : `/periods/close?id=${period.id}`)}
+        variant="outlined"
+        color="primary"
+        size="sm"
+        fullWidth
+        className="month-card-action"
       >
         {isClosed ? "Reopen" : "Close"}
-      </button>
+      </ModusWcButton>
     </div>
   )
 }
@@ -58,29 +55,31 @@ export default function PeriodWorkspacePage() {
   return (
     <div className="hub-page">
       <div style={{ flexShrink: 0 }}>
-        <h1 className="hub-title">
+        <div className="hub-title">
           <ModusWcIcon name="calendar_today" size="md" decorative />
-          Fiscal Periods
-        </h1>
+          <ModusWcTypography hierarchy="h1" customClass="hub-title-text" label="Fiscal Periods" />
+        </div>
       </div>
 
-      <p style={{ margin: 0, fontSize: "0.8125rem", color: "var(--modus-wc-color-base-content-low-contrast)" }}>
-        Close months to lock your books. Reopen them any time to make corrections.
-      </p>
+      <ModusWcTypography
+        hierarchy="p"
+        customClass="period-intro"
+        label="Close months to lock your books. Reopen them any time to make corrections."
+      />
 
       <div className="kpi-row">
         <div className="kpi-card">
-          <span className="kpi-label">Current Period</span>
+          <ModusWcTypography hierarchy="p" size="xs" weight="bold" customClass="kpi-label" label="Current Period" />
           <span className="kpi-value" style={{ fontSize: "1.1rem" }}>{currentPeriod?.label ?? "—"}</span>
           <span className="kpi-sub">Active accounting month</span>
         </div>
         <div className="kpi-card">
-          <span className="kpi-label">Open Periods</span>
+          <ModusWcTypography hierarchy="p" size="xs" weight="bold" customClass="kpi-label" label="Open Periods" />
           <span className="kpi-value kpi-value--success">{openCount}</span>
           <span className="kpi-sub">Transactions allowed</span>
         </div>
         <div className="kpi-card">
-          <span className="kpi-label">Closed Periods</span>
+          <ModusWcTypography hierarchy="p" size="xs" weight="bold" customClass="kpi-label" label="Closed Periods" />
           <span className="kpi-value">{closedCount}</span>
           <span className="kpi-sub">Locked from changes</span>
         </div>
@@ -88,7 +87,7 @@ export default function PeriodWorkspacePage() {
 
       {years.map((year) => (
         <div key={year}>
-          <h2 style={{ margin: "0 0 0.75rem", fontSize: "0.875rem", fontWeight: 700, color: "var(--modus-wc-color-base-content-low-contrast)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{year}</h2>
+          <ModusWcTypography hierarchy="h2" customClass="period-year-heading" label={String(year)} />
           <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
             {periods.filter((p) => p.year === year).map((period) => (
               <MonthCard key={period.id} period={period} />
@@ -98,12 +97,15 @@ export default function PeriodWorkspacePage() {
       ))}
 
       <div style={{ paddingTop: "0.5rem" }}>
-        <button
-          onClick={() => navigate('/accounting')}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Open Sans, sans-serif', fontSize: '0.875rem', fontWeight: 600, color: 'var(--modus-wc-color-primary)', textDecoration: 'underline', padding: 0 }}
+        <ModusWcButton
+          onButtonClick={() => navigate('/accounting')}
+          variant="borderless"
+          color="primary"
+          size="sm"
+          customClass="link-underline"
         >
           Back to Accounting
-        </button>
+        </ModusWcButton>
       </div>
     </div>
   )

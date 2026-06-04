@@ -1,6 +1,6 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ModusWcIcon } from '@trimble-oss/moduswebcomponents-react'
+import { ModusWcIcon, ModusWcButton, ModusWcTypography } from '@trimble-oss/moduswebcomponents-react'
 
 interface AccountingItem {
   icon: string
@@ -63,10 +63,10 @@ export default function AccountingHub() {
 
   return (
     <div className="hub-page">
-      <h1 className="hub-title">
+      <div className="hub-title">
         <ModusWcIcon name="account_balance" size="md" decorative />
-        Accounting Hub
-      </h1>
+        <ModusWcTypography hierarchy="h1" customClass="hub-title-text" label="Accounting Hub" />
+      </div>
 
       <div style={{ display: 'flex', gap: '2.5rem', alignItems: 'flex-start', flex: 1 }}>
         {/* Card list */}
@@ -74,34 +74,14 @@ export default function AccountingHub() {
           {ITEMS.map((item) => {
             const active = !!item.path
             return (
-              <button
+              <ModusWcButton
                 key={item.title}
-                onClick={() => item.path && navigate(item.path)}
+                onButtonClick={() => item.path && navigate(item.path)}
                 disabled={!active}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '1rem',
-                  padding: '1rem 1.25rem',
-                  borderRadius: 10,
-                  border: '1px solid var(--modus-wc-color-base-200)',
-                  background: 'var(--modus-wc-color-base-page)',
-                  cursor: active ? 'pointer' : 'default',
-                  textAlign: 'left',
-                  width: '100%',
-                  fontFamily: 'Open Sans, sans-serif',
-                  opacity: active ? 1 : 0.55,
-                  transition: 'border-color 0.15s, box-shadow 0.15s',
-                }}
-                onMouseEnter={(e) => {
-                  if (!active) return
-                  e.currentTarget.style.borderColor = 'var(--modus-wc-color-primary)'
-                  e.currentTarget.style.boxShadow = '0 2px 10px rgba(0,0,0,0.07)'
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = 'var(--modus-wc-color-base-200)'
-                  e.currentTarget.style.boxShadow = 'none'
-                }}
+                variant="borderless"
+                color="secondary"
+                customClass="accounting-item"
+                className="accounting-item"
               >
                 <div style={{ width: 44, height: 44, borderRadius: '50%', background: item.iconBg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                   <ModusWcIcon name={item.icon} size="sm" decorative style={{ color: item.iconColor } as React.CSSProperties} />
@@ -118,7 +98,7 @@ export default function AccountingHub() {
                     Coming soon
                   </span>
                 )}
-              </button>
+              </ModusWcButton>
             )
           })}
         </div>

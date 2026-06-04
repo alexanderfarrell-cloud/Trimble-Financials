@@ -1,7 +1,7 @@
 ﻿import React from "react"
 import { useState } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
-import { ModusWcIcon } from "@trimble-oss/moduswebcomponents-react"
+import { ModusWcIcon, ModusWcButton, ModusWcTypography } from "@trimble-oss/moduswebcomponents-react"
 import { usePeriodsContext } from "../context/PeriodsContext"
 import type { FiscalPeriod } from "../data/periods"
 
@@ -38,9 +38,9 @@ function WizardShell({
           <div style={{ width: 40, height: 40, borderRadius: "50%", background: "color-mix(in srgb, var(--modus-wc-color-primary) 8%, transparent)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <ModusWcIcon name="lock_open" size="sm" decorative style={{ color: "var(--modus-wc-color-primary)" } as React.CSSProperties} />
           </div>
-          <button onClick={onCancel} aria-label="Close" style={{ background: "none", border: "none", cursor: "pointer", padding: 6, borderRadius: 6, color: "var(--modus-wc-color-base-content-low-contrast)", display: "flex" }}>
+          <ModusWcButton onButtonClick={onCancel} aria-label="Close" variant="borderless" color="secondary" shape="square" size="sm">
             <ModusWcIcon name="close" size="sm" decorative />
-          </button>
+          </ModusWcButton>
         </div>
       </div>
 
@@ -54,27 +54,30 @@ function WizardShell({
       <div className="wizard-footer" style={{ borderTop: "1px solid var(--modus-wc-color-base-200)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div style={{ display: "flex", gap: 16 }}>
           {showBack && (
-            <button onClick={onBack} style={{ background: "none", border: "none", cursor: "pointer", fontFamily: "Open Sans, sans-serif", fontSize: "0.875rem", color: "var(--modus-wc-color-primary)", textDecoration: "underline", padding: 0 }}>Back</button>
+            <ModusWcButton onButtonClick={onBack} variant="borderless" color="primary" size="sm" customClass="link-underline">Back</ModusWcButton>
           )}
         </div>
         {nextLabel === "→" ? (
-          <button
-            onClick={onNext}
+          <ModusWcButton
+            onButtonClick={onNext}
             disabled={nextDisabled}
-            style={{ width: 52, height: 52, borderRadius: "50%", border: "none", background: nextDisabled ? "var(--modus-wc-color-base-200)" : "var(--modus-wc-color-primary)", color: nextDisabled ? "var(--modus-wc-color-base-content-low-contrast)" : "#fff", cursor: nextDisabled ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "background 0.15s" }}
+            color="primary"
+            shape="circle"
+            size="lg"
             aria-label="Next"
           >
             <ModusWcIcon name="arrow_forward" size="sm" decorative />
-          </button>
+          </ModusWcButton>
         ) : (
-          <button
-            onClick={onNext}
+          <ModusWcButton
+            onButtonClick={onNext}
             disabled={nextDisabled}
-            style={{ padding: "0.625rem 1.5rem", borderRadius: 99, border: "none", background: nextDisabled ? "var(--modus-wc-color-base-200)" : "var(--modus-wc-color-primary)", color: nextDisabled ? "var(--modus-wc-color-base-content-low-contrast)" : "#fff", cursor: nextDisabled ? "not-allowed" : "pointer", fontFamily: "Open Sans, sans-serif", fontSize: "0.875rem", fontWeight: 700, display: "flex", alignItems: "center", gap: 8, transition: "background 0.15s" }}
+            color="primary"
+            shape="ellipse"
           >
-            <ModusWcIcon name="lock_open" size="xs" decorative />
+            <ModusWcIcon slot="start" name="lock_open" size="xs" decorative />
             {nextLabel}
-          </button>
+          </ModusWcButton>
         )}
       </div>
     </div>
@@ -83,14 +86,16 @@ function WizardShell({
 
 function PeriodPickerCard({ period, selected, onClick }: { period: FiscalPeriod; selected: boolean; onClick: () => void }) {
   return (
-    <button
-      onClick={onClick}
-      style={{ textAlign: "left", cursor: "pointer", borderRadius: 10, padding: "1rem", border: selected ? "2px solid var(--modus-wc-color-primary)" : "1px solid var(--modus-wc-color-base-200)", background: selected ? "color-mix(in srgb, var(--modus-wc-color-primary) 6%, transparent)" : "var(--modus-wc-color-base-page)", fontFamily: "Open Sans, sans-serif", transition: "border 0.15s, background 0.15s", display: "flex", flexDirection: "column", gap: 6 }}
+    <ModusWcButton
+      onButtonClick={onClick}
+      variant="borderless"
+      color="secondary"
+      className={`period-picker-host${selected ? " is-selected" : ""}`}
     >
       <span style={{ fontWeight: 700, fontSize: "0.9375rem", color: "var(--modus-wc-color-base-content)" }}>{period.label.split(" ")[0]}</span>
       <span style={{ fontSize: "0.72rem", color: "var(--modus-wc-color-base-content-low-contrast)" }}>{period.year}</span>
       {selected && <ModusWcIcon name="check_circle" size="xs" decorative style={{ color: "var(--modus-wc-color-primary)" } as React.CSSProperties} />}
-    </button>
+    </ModusWcButton>
   )
 }
 
@@ -121,9 +126,9 @@ export default function ReopenPeriodWizard() {
             {selected?.label} is now unlocked. Any new or edited transactions will automatically update your current balances.
           </div>
         </div>
-        <button onClick={() => navigate("/periods")} style={{ padding: "0.5rem 1.5rem", borderRadius: 99, border: "none", background: "var(--modus-wc-color-primary)", color: "#fff", fontFamily: "Open Sans, sans-serif", fontSize: "0.875rem", fontWeight: 600, cursor: "pointer" }}>
+        <ModusWcButton onButtonClick={() => navigate("/periods")} color="primary" shape="ellipse">
           Done
-        </button>
+        </ModusWcButton>
       </div>
     )
   }
@@ -147,23 +152,26 @@ export default function ReopenPeriodWizard() {
                   Reopen {selected?.label}?
                 </div>
               </div>
-              <p style={{ margin: 0, fontSize: "0.875rem", color: "var(--modus-wc-color-base-content-low-contrast)" }}>
+              <ModusWcTypography hierarchy="p" customClass="wizard-body--muted" label="">
                 This will unlock <strong>{selected?.label}</strong>. Your other months stay safely locked. You can close it again at any time.
-              </p>
+              </ModusWcTypography>
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
-                <button
-                  onClick={() => setShowConfirm(false)}
-                  style={{ padding: "0.5rem 1.25rem", borderRadius: 99, border: "1px solid var(--modus-wc-color-base-200)", background: "transparent", color: "var(--modus-wc-color-base-content)", fontFamily: "Open Sans, sans-serif", fontSize: "0.875rem", fontWeight: 600, cursor: "pointer" }}
+                <ModusWcButton
+                  onButtonClick={() => setShowConfirm(false)}
+                  variant="outlined"
+                  color="secondary"
+                  shape="ellipse"
                 >
                   Cancel
-                </button>
-                <button
-                  onClick={() => { if (selected) { reopenPeriod(selected.id); setShowConfirm(false); setStep(3) } }}
-                  style={{ padding: "0.5rem 1.25rem", borderRadius: 99, border: "none", background: "var(--modus-wc-color-primary)", color: "#fff", fontFamily: "Open Sans, sans-serif", fontSize: "0.875rem", fontWeight: 700, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}
+                </ModusWcButton>
+                <ModusWcButton
+                  onButtonClick={() => { if (selected) { reopenPeriod(selected.id); setShowConfirm(false); setStep(3) } }}
+                  color="primary"
+                  shape="ellipse"
                 >
-                  <ModusWcIcon name="lock_open" size="xs" decorative />
+                  <ModusWcIcon slot="start" name="lock_open" size="xs" decorative />
                   Yes, Reopen Period
-                </button>
+                </ModusWcButton>
               </div>
             </div>
           </div>
@@ -189,9 +197,9 @@ export default function ReopenPeriodWizard() {
             </div>
           </div>
 
-          <p style={{ margin: 0, fontSize: "0.9375rem", color: "var(--modus-wc-color-base-content)" }}>
+          <ModusWcTypography hierarchy="p" customClass="wizard-body" label="">
             Unlocking this period will allow transactions in <strong>{selected?.label}</strong> to be created and edited again.
-          </p>
+          </ModusWcTypography>
 
           <div style={{ background: "color-mix(in srgb, var(--modus-wc-color-primary) 6%, transparent)", border: "1px solid color-mix(in srgb, var(--modus-wc-color-primary) 20%, transparent)", borderRadius: 10, padding: "1rem", display: "flex", gap: 12 }}>
             <ModusWcIcon name="info" size="sm" decorative style={{ color: "var(--modus-wc-color-primary)", flexShrink: 0, marginTop: 2 } as React.CSSProperties} />
@@ -200,9 +208,7 @@ export default function ReopenPeriodWizard() {
             </div>
           </div>
 
-          <p style={{ margin: 0, fontSize: "0.8125rem", color: "var(--modus-wc-color-base-content-low-contrast)" }}>
-            You can close this period again at any time.
-          </p>
+          <ModusWcTypography hierarchy="p" customClass="wizard-body--muted" label="You can close this period again at any time." />
         </div>
         </WizardShell>
       </>
@@ -219,9 +225,7 @@ export default function ReopenPeriodWizard() {
       nextDisabled={!selectedId}
     >
       <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-        <p style={{ margin: 0, fontSize: "0.9375rem", color: "var(--modus-wc-color-base-content-low-contrast)" }}>
-          Select the closed month you want to re-open for corrections.
-        </p>
+        <ModusWcTypography hierarchy="p" customClass="wizard-intro" label="Select the closed month you want to re-open for corrections." />
         {[2025, 2026].map((year) => {
           const rows = closedPeriods.filter((p) => p.year === year)
           if (!rows.length) return null

@@ -1026,3 +1026,123 @@ modus-wc-button i.modus-wc-icon {
     padding: 1.25rem;
   }
 }
+
+/* ── Modus adoption overrides ─────────────────────────────────────────────── */
+/* These classes restore the original bespoke styling after raw <button>/text  */
+/* elements were migrated to <modus-wc-button> / <modus-wc-typography>.         */
+/* modus-wc-button is light-DOM, so customClass lands on the inner .modus-wc-btn */
+/* and host className lands on the <modus-wc-button> element.                    */
+
+/* Typography */
+.modus-wc-typography.hub-title-text {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--modus-wc-color-base-content);
+}
+.modus-wc-typography.period-intro {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--modus-wc-color-base-content-low-contrast);
+}
+.modus-wc-typography.period-year-heading {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--modus-wc-color-base-content-low-contrast);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.modus-wc-typography.wizard-body {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--modus-wc-color-base-content);
+}
+.modus-wc-typography.wizard-body--muted {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--modus-wc-color-base-content-low-contrast);
+}
+.modus-wc-typography.wizard-intro {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--modus-wc-color-base-content-low-contrast);
+}
+.modus-wc-typography.wizard-modal-body {
+  margin: 0 0 0.75rem;
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: var(--modus-wc-color-base-content-low-contrast);
+}
+.modus-wc-typography.wizard-modal-reminder {
+  margin: 0 0 1.5rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--modus-wc-color-base-content-low-contrast);
+  background: var(--modus-wc-color-base-100);
+  border: 1px solid var(--modus-wc-color-base-200);
+  border-radius: 8px;
+}
+
+/* Accounting hub: clickable list-row cards */
+modus-wc-button.accounting-item {
+  display: block;
+  width: 100%;
+}
+modus-wc-button.accounting-item .modus-wc-btn {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  justify-content: flex-start;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--modus-wc-color-base-200);
+  border-radius: 10px;
+  background: var(--modus-wc-color-base-page);
+  text-align: left;
+  font-weight: 400;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+modus-wc-button.accounting-item .modus-wc-btn:not(.modus-wc-btn-disabled):hover {
+  border-color: var(--modus-wc-color-primary);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
+}
+modus-wc-button.accounting-item .modus-wc-btn.modus-wc-btn-disabled {
+  opacity: 0.55;
+}
+
+/* Period workspace: month "Close"/"Reopen" action fills its card */
+modus-wc-button.month-card-action {
+  display: block;
+  width: 100%;
+}
+
+/* Underlined text-link buttons ("Back", "Back to Accounting") */
+.modus-wc-btn.link-underline {
+  text-decoration: underline;
+}
+
+/* Wizard period-picker cards */
+modus-wc-button.period-picker-host {
+  display: block;
+  width: 100%;
+}
+modus-wc-button.period-picker-host .modus-wc-btn {
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 1rem;
+  border: 1px solid var(--modus-wc-color-base-200);
+  border-radius: 10px;
+  background: var(--modus-wc-color-base-page);
+  text-align: left;
+  font-weight: 400;
+}
+modus-wc-button.period-picker-host.is-selected .modus-wc-btn {
+  border: 2px solid var(--modus-wc-color-primary);
+  background: color-mix(in srgb, var(--modus-wc-color-primary) 6%, transparent);
+}
