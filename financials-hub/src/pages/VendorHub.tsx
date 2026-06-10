@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { ModusWcBadge, ModusWcIcon } from '@trimble-oss/moduswebcomponents-react'
+import { AddButton } from '../components/AddButton'
+import { HubPageFooter } from '../components/HubPageFooter'
 
 type VendorStatus = 'Preferred' | 'Active' | 'Inactive' | 'Draft'
 type VendorCategory = 'Structural' | 'Concrete' | 'Electrical' | 'Mechanical' | 'Excavation' | 'Finishing' | 'General'
@@ -239,10 +241,13 @@ export default function VendorHub() {
   return (
     <div className="hub-page">
       {/* Header */}
-      <h1 className="hub-title">
-        <ModusWcIcon name="business" size="md" decorative />
-        Vendors
-      </h1>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <h1 className="hub-title">
+          <ModusWcIcon name="business" size="md" decorative />
+          Vendors
+        </h1>
+        <AddButton />
+      </div>
 
       {/* KPI row */}
       <div className="kpi-row">
@@ -423,6 +428,7 @@ export default function VendorHub() {
           <span>No vendors match your search</span>
         </div>
       )}
+      <HubPageFooter addLabel="Add Vendor" />
     </div>
   )
 }

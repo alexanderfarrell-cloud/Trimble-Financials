@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { ModusWcBadge, ModusWcIcon } from '@trimble-oss/moduswebcomponents-react'
+import { AddButton } from '../components/AddButton'
+import { HubPageFooter } from '../components/HubPageFooter'
 
 type ExpenseStatus = 'Approved' | 'Pending' | 'Rejected' | 'Draft'
 type ExpenseCategory = 'Labor' | 'Materials' | 'Equipment' | 'Subcontractor' | 'Travel' | 'Other'
@@ -187,10 +189,13 @@ export default function ExpenseHub() {
   return (
     <div className="hub-page">
       {/* Header */}
-      <h1 className="hub-title">
-        <ModusWcIcon name="credit_card" size="md" decorative />
-        Expenses
-      </h1>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <h1 className="hub-title">
+          <ModusWcIcon name="credit_card" size="md" decorative />
+          Expenses
+        </h1>
+        <AddButton />
+      </div>
 
       {/* KPI summary */}
       <div className="kpi-row">
@@ -349,6 +354,7 @@ export default function ExpenseHub() {
             )}
           </div>
         </div>
+      <HubPageFooter addLabel="Add Expense" />
     </div>
   )
 }

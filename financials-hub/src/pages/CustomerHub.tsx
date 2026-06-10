@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { ModusWcBadge, ModusWcIcon } from '@trimble-oss/moduswebcomponents-react'
+import { AddButton } from '../components/AddButton'
+import { HubPageFooter } from '../components/HubPageFooter'
 
 type CustomerType = 'General Contractor' | 'Government' | 'Developer' | 'Owner'
 type CustomerStatus = 'Active' | 'Draft'
@@ -265,10 +267,13 @@ export default function CustomerHub() {
   return (
     <div className="hub-page">
       {/* Header */}
-      <h1 className="hub-title">
-        <ModusWcIcon name="contacts" size="md" decorative />
-        Customers
-      </h1>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <h1 className="hub-title">
+          <ModusWcIcon name="contacts" size="md" decorative />
+          Customers
+        </h1>
+        <AddButton />
+      </div>
 
       {/* KPI row */}
       <div className="kpi-row">
@@ -437,6 +442,7 @@ export default function CustomerHub() {
           <span>No customers match your search</span>
         </div>
       )}
+      <HubPageFooter addLabel="Add Customer" />
     </div>
   )
 }

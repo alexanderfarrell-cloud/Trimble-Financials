@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { ModusWcIcon } from '@trimble-oss/moduswebcomponents-react'
+import { AddButton } from '../components/AddButton'
+import { HubPageFooter } from '../components/HubPageFooter'
 
 type InvoiceStatus = 'Overdue' | 'Pending' | 'Approved' | 'Paid' | 'Draft'
 
@@ -210,10 +212,13 @@ export default function BillingHub() {
   return (
     <div className="hub-page">
       {/* Header */}
-      <h1 className="hub-title">
-        <ModusWcIcon name="receipt" size="md" decorative />
-        Billing
-      </h1>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <h1 className="hub-title">
+          <ModusWcIcon name="receipt" size="md" decorative />
+          Billing
+        </h1>
+        <AddButton />
+      </div>
 
       {/* KPI summary */}
       <div className="kpi-row">
@@ -364,6 +369,7 @@ export default function BillingHub() {
             })}
           </div>
       </div>
+      <HubPageFooter addLabel="Add Billing" />
     </div>
   )
 }
