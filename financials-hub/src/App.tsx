@@ -19,6 +19,8 @@ import ClosePeriodWizard from './pages/ClosePeriodWizard'
 import ReopenPeriodWizard from './pages/ReopenPeriodWizard'
 import AccountingHub from './pages/AccountingHub'
 import ReportsHub from './pages/ReportsHub'
+import ImportWizard from './pages/ImportWizard'
+import OnboardingSetup from './pages/OnboardingSetup'
 import { PeriodsProvider } from './context/PeriodsContext'
 
 const SIDENAV_MAX_WIDTH = '256px'
@@ -134,6 +136,8 @@ export default function App() {
                 <Route path="/periods/close" element={<ClosePeriodWizard />} />
                 <Route path="/periods/reopen" element={<ReopenPeriodWizard />} />
                 <Route path="/reports" element={<ReportsHub />} />
+                <Route path="/onboarding" element={<OnboardingSetup />} />
+                <Route path="/onboarding/import" element={<ImportWizard />} />
               </Routes>
             </PeriodsProvider>
           </main>

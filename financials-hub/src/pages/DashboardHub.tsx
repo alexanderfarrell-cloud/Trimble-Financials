@@ -600,7 +600,296 @@ function TodoSection() {
   )
 }
 
+// ─── Getting Started dashboard (manual entry path) ────────────────────────────
+
+const GETTING_STARTED_TASKS: {
+  id: string
+  icon: string
+  label: string
+  badge: string
+  badgeVariant: 'pending' | 'optional'
+  description: string
+  route: string | null
+}[] = [
+  { id: 'job',      icon: 'assignment',  label: 'Add Job',           badge: 'Pending',  badgeVariant: 'pending',  description: 'Add a new job or complete your existing draft to start building your main dashboard.', route: '/jobs/new' },
+  { id: 'customer', icon: 'contacts',    label: 'Add Customer',      badge: 'Pending',  badgeVariant: 'pending',  description: 'Add a new customer to start associating jobs and billings.', route: '/customers' },
+  { id: 'users',    icon: 'group',       label: 'Add Users',         badge: 'Optional', badgeVariant: 'optional', description: "Add new users and assign licenses to them inside Trimble's Admin Console.", route: null },
+  { id: 'billing',  icon: 'receipt',     label: 'Add Billing',       badge: 'Pending',  badgeVariant: 'pending',  description: 'Add a new billing or complete your existing draft to start building your main dashboard.', route: '/billing' },
+  { id: 'expense',  icon: 'credit_card', label: 'Record an Expense', badge: 'Pending',  badgeVariant: 'pending',  description: 'Add a new expense or complete your existing draft to start building your main dashboard.', route: '/expenses' },
+]
+
+function GettingStartedDashboard() {
+  const navigate = useNavigate()
+  const [dismissed, setDismissed] = React.useState(
+    () => localStorage.getItem('getting-started-dismissed') === 'true'
+  )
+  const [activeTab, setActiveTab] = React.useState<'recent' | 'insights'>('recent')
+
+  const handleDismiss = () => {
+    localStorage.setItem('getting-started-dismissed', 'true')
+    setDismissed(true)
+  }
+
+  const handleReset = () => {
+    localStorage.removeItem('onboarding-path')
+    localStorage.removeItem('getting-started-dismissed')
+    window.location.href = '/onboarding'
+  }
+
+  return (
+    <div className="hub-page">
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
+        <div>
+          <h1 style={{ margin: '0 0 2px', fontSize: '1.375rem', fontWeight: 700, color: 'var(--modus-wc-color-base-content)', fontFamily: 'Open Sans, sans-serif' }}>
+            Hello, Alex!
+          </h1>
+        </div>
+        <AddButton />
+      </div>
+
+      {/* Welcome hero */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--modus-wc-color-base-content)', marginBottom: 4 }}>
+            Welcome to Trimble Financials
+          </div>
+          <div style={{ fontSize: '0.875rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>
+            You run the job. We'll run the numbers.
+          </div>
+        </div>
+        <div style={{ width: 72, height: 72, borderRadius: '60% 40% 55% 45% / 45% 55% 45% 55%', background: 'color-mix(in srgb, var(--modus-wc-color-primary) 8%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <ModusWcIcon name="account_balance" size="md" decorative style={{ color: 'var(--modus-wc-color-primary)' } as React.CSSProperties} />
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="tab-bar" style={{ marginBottom: 0 }}>
+        {(['recent', 'insights'] as const).map((tab) => (
+          <button
+            key={tab}
+            className={`tab-btn${activeTab === tab ? ' tab-btn--active' : ''}`}
+            onClick={() => setActiveTab(tab)}
+            style={{ textTransform: 'capitalize' }}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 'recent' && (
+        <>
+          {!dismissed ? (
+            /* Getting Started card */
+            <div style={{ border: '1px solid var(--modus-wc-color-base-200)', borderRadius: 10, background: 'var(--modus-wc-color-base-page)', overflow: 'hidden' }}>
+              {/* Card header */}
+              <div style={{ padding: '1rem 1.25rem 0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--modus-wc-color-base-content)' }}>
+                  Getting Started
+                </span>
+                <button
+                  onClick={handleDismiss}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Open Sans, sans-serif', fontSize: '0.8125rem', color: 'var(--modus-wc-color-primary)', padding: 0, textDecoration: 'underline' }}
+                >
+                  Skip seeing this
+                </button>
+              </div>
+
+              {/* Progress bar */}
+              <div style={{ padding: '0 1.25rem 1rem' }}>
+                <div style={{ fontSize: '0.72rem', color: 'var(--modus-wc-color-base-content-low-contrast)', marginBottom: 6, fontFamily: 'Open Sans, sans-serif' }}>
+                  Let's get you setup to start using Financials Go
+                </div>
+                <div className="prog-track" style={{ height: 6 }}>
+                  <div className="prog-fill" style={{ width: '0%' }} />
+                </div>
+              </div>
+
+              {/* Task rows */}
+              <div style={{ borderTop: '1px solid var(--modus-wc-color-base-200)' }}>
+                {GETTING_STARTED_TASKS.map((task, i) => (
+                  <button
+                    key={task.id}
+                    onClick={() => task.route && navigate(task.route)}
+                    disabled={!task.route}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 14,
+                      width: '100%',
+                      padding: '0.875rem 1.25rem',
+                      background: 'none',
+                      border: 'none',
+                      borderBottom: i < GETTING_STARTED_TASKS.length - 1 ? '1px solid var(--modus-wc-color-base-200)' : 'none',
+                      cursor: task.route ? 'pointer' : 'default',
+                      textAlign: 'left',
+                      fontFamily: 'Open Sans, sans-serif',
+                    }}
+                    onMouseEnter={(e) => { if (task.route) e.currentTarget.style.background = 'var(--modus-wc-color-base-100)' }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = 'none' }}
+                  >
+                    {/* Icon */}
+                    <div style={{ width: 38, height: 38, borderRadius: '50%', background: 'var(--modus-wc-color-base-100)', border: '1px solid var(--modus-wc-color-base-200)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <ModusWcIcon name={task.icon} size="sm" decorative style={{ color: 'var(--modus-wc-color-base-content-low-contrast)' } as React.CSSProperties} />
+                    </div>
+
+                    {/* Label + description */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
+                        <span style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--modus-wc-color-base-content)' }}>
+                          {task.label}
+                        </span>
+                        <span style={{
+                          fontSize: '0.65rem',
+                          fontWeight: 700,
+                          letterSpacing: '0.04em',
+                          borderRadius: 4,
+                          padding: '1px 7px',
+                          border: task.badgeVariant === 'pending'
+                            ? '1px solid color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 60%, transparent)'
+                            : '1px solid var(--modus-wc-color-base-200)',
+                          background: task.badgeVariant === 'pending'
+                            ? 'color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 12%, transparent)'
+                            : 'var(--modus-wc-color-base-100)',
+                          color: task.badgeVariant === 'pending'
+                            ? '#7a5200'
+                            : 'var(--modus-wc-color-base-content-low-contrast)',
+                        }}>
+                          {task.badge}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)', lineHeight: 1.5 }}>
+                        {task.description}
+                      </div>
+                    </div>
+
+                    {/* Chevron */}
+                    {task.route && (
+                      <ModusWcIcon name="chevron_right" size="sm" decorative style={{ color: 'var(--modus-wc-color-base-content-low-contrast)', flexShrink: 0 } as React.CSSProperties} />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            /* Empty state after skip */
+            <div className="empty-state" style={{ paddingTop: '4rem' }}>
+              <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'var(--modus-wc-color-base-100)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <ModusWcIcon name="dashboard" size="md" decorative style={{ color: 'var(--modus-wc-color-base-content-low-contrast)' } as React.CSSProperties} />
+              </div>
+              <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--modus-wc-color-base-content)' }}>
+                Your dashboard is empty
+              </div>
+              <div style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)', maxWidth: 300 }}>
+                Add a job, customer, or billing to start seeing data here.
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {activeTab === 'insights' && (
+        <div className="empty-state" style={{ paddingTop: '4rem' }}>
+          <ModusWcIcon name="bar_chart" size="lg" decorative style={{ color: 'var(--modus-wc-color-base-content-low-contrast)' } as React.CSSProperties} />
+          <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--modus-wc-color-base-content)' }}>
+            No insights yet
+          </div>
+          <div style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)', maxWidth: 300 }}>
+            Insights will appear once you've added jobs, billings, and expenses.
+          </div>
+        </div>
+      )}
+
+      {/* Demo reset */}
+      <div style={{ display: 'flex', justifyContent: 'flex-start', paddingTop: 8 }}>
+        <button
+          onClick={handleReset}
+          style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: '1px solid var(--modus-wc-color-base-200)', borderRadius: 6, padding: '3px 10px', cursor: 'pointer', fontFamily: 'Open Sans, sans-serif', fontSize: '0.72rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}
+        >
+          <ModusWcIcon name="refresh" size="xs" decorative />
+          Reset demo
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function ImportBanner() {
+  const navigate = useNavigate()
+  const [dismissed, setDismissed] = React.useState(
+    () => localStorage.getItem('import-banner-dismissed') === 'true'
+  )
+
+  if (dismissed) return null
+
+  return (
+    <div style={{
+      border: '1.5px solid color-mix(in srgb, var(--modus-wc-color-primary) 40%, transparent)',
+      borderRadius: 10,
+      padding: '1rem 1.25rem',
+      background: 'color-mix(in srgb, var(--modus-wc-color-primary) 5%, transparent)',
+      display: 'flex',
+      alignItems: 'center',
+      gap: 14,
+    }}>
+      <div style={{
+        width: 40,
+        height: 40,
+        borderRadius: '50%',
+        background: 'color-mix(in srgb, var(--modus-wc-color-primary) 12%, transparent)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexShrink: 0,
+      }}>
+        <ModusWcIcon name="import_export" size="sm" decorative style={{ color: 'var(--modus-wc-color-primary)' } as React.CSSProperties} />
+      </div>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--modus-wc-color-base-content)', marginBottom: 2 }}>
+          Bring in your existing data
+        </div>
+        <div style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>
+          Import customers, vendors, jobs, or expenses from a CSV or spreadsheet to get started faster.
+        </div>
+      </div>
+        <button
+        onClick={() => navigate('/onboarding')}
+        style={{
+          padding: '0.4375rem 1rem',
+          borderRadius: 99,
+          border: 'none',
+          background: 'var(--modus-wc-color-primary)',
+          color: '#fff',
+          fontFamily: 'Open Sans, sans-serif',
+          fontSize: '0.8125rem',
+          fontWeight: 700,
+          cursor: 'pointer',
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+        }}
+      >
+        <ModusWcIcon name="upload_file" size="xs" decorative />
+        Import data
+      </button>
+      <button
+        onClick={() => { localStorage.setItem('import-banner-dismissed', 'true'); setDismissed(true) }}
+        aria-label="Dismiss"
+        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, borderRadius: 4, color: 'var(--modus-wc-color-base-content-low-contrast)', display: 'flex', flexShrink: 0 }}
+      >
+        <ModusWcIcon name="close" size="xs" decorative />
+      </button>
+    </div>
+  )
+}
+
 export default function DashboardHub() {
+  const onboardingPath = localStorage.getItem('onboarding-path')
+  if (onboardingPath === 'manual') {
+    return <GettingStartedDashboard />
+  }
+
   return (
     <div className="hub-page">
       {/* Header */}
@@ -616,6 +905,9 @@ export default function DashboardHub() {
         </div>
         <AddButton />
       </div>
+
+      {/* Import banner — dismissible */}
+      <ImportBanner />
 
       {/* Strategic KPI stat cards */}
       <div className="kpi-row">
