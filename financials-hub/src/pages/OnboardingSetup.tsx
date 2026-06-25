@@ -116,6 +116,11 @@ export default function OnboardingSetup() {
     navigate('/')
   }
 
+  const handleTryLinearFlow = () => {
+    localStorage.setItem('onboarding-path', 'import')
+    navigate('/onboarding/import-v2')
+  }
+
   return (
     <>
     {showManualConfirm && (
@@ -254,7 +259,31 @@ export default function OnboardingSetup() {
       </div>
 
       {/* CTA */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <button
+          onClick={handleTryLinearFlow}
+          disabled={selected !== 'import'}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 5,
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            cursor: selected === 'import' ? 'pointer' : 'not-allowed',
+            fontSize: '0.8125rem',
+            fontWeight: 600,
+            color: selected === 'import'
+              ? 'var(--modus-wc-color-primary)'
+              : 'var(--modus-wc-color-base-content-low-contrast)',
+            fontFamily: 'Open Sans, sans-serif',
+            transition: 'color 0.15s',
+          }}
+        >
+          Try linear flow
+          <ModusWcIcon name="arrow_forward" size="xs" decorative />
+        </button>
+
         <button
           onClick={handleContinue}
           disabled={!selected}

@@ -235,7 +235,7 @@ function ChecklistView({
       onClose={onClose}
       footer={
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <span style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)', fontFamily: 'Open Sans, sans-serif' }}>
               {completedSteps.length} of {STEP_ORDER.length} complete
             </span>

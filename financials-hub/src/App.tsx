@@ -20,6 +20,7 @@ import ReopenPeriodWizard from './pages/ReopenPeriodWizard'
 import AccountingHub from './pages/AccountingHub'
 import ReportsHub from './pages/ReportsHub'
 import ImportWizard from './pages/ImportWizard'
+import ImportWizardV2 from './pages/ImportWizardV2'
 import OnboardingSetup from './pages/OnboardingSetup'
 import { PeriodsProvider } from './context/PeriodsContext'
 
@@ -138,6 +139,7 @@ export default function App() {
                 <Route path="/reports" element={<ReportsHub />} />
                 <Route path="/onboarding" element={<OnboardingSetup />} />
                 <Route path="/onboarding/import" element={<ImportWizard />} />
+                <Route path="/onboarding/import-v2" element={<ImportWizardV2 />} />
               </Routes>
             </PeriodsProvider>
           </main>
