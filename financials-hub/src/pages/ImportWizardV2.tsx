@@ -5,7 +5,7 @@ import { ModusWcIcon } from '@trimble-oss/moduswebcomponents-react'
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type StepId = 'bank-accounts' | 'customers' | 'jobs' | 'vendors' | 'trial-balance'
-type SubPhase = 'upload' | 'review'
+type SubPhase = 'intro' | 'upload' | 'review'
 
 interface ReviewColumn { key: string; label: string; align?: 'right' }
 interface ReviewRow    { [key: string]: string }
@@ -242,6 +242,64 @@ function StepPopover({
   )
 }
 
+// ─── Intro screen ─────────────────────────────────────────────────────────────
+
+function IntroScreen() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem', maxWidth: 560 }}>
+      <div>
+        <h2 style={{ margin: '0 0 0.5rem', fontSize: '1.25rem', fontWeight: 700, color: 'var(--modus-wc-color-base-content)', fontFamily: 'Open Sans, sans-serif' }}>
+          What you'll need
+        </h2>
+        <p style={{ margin: 0, fontSize: '0.9375rem', color: 'var(--modus-wc-color-base-content-low-contrast)', lineHeight: 1.6 }}>
+          You'll import 5 files in order. Each step builds on the last, so have these ready before you begin.
+        </p>
+      </div>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+        {STEPS.map((step, i) => (
+          <div
+            key={step.id}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 14,
+              padding: '0.875rem 1rem',
+              border: '1px solid var(--modus-wc-color-base-200)',
+              borderRadius: 10,
+              background: 'var(--modus-wc-color-base-page)',
+            }}
+          >
+            <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--modus-wc-color-base-100)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--modus-wc-color-base-content-low-contrast)', fontFamily: 'Open Sans, sans-serif' }}>
+                {i + 1}
+              </span>
+            </div>
+            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'color-mix(in srgb, var(--modus-wc-color-primary) 8%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <ModusWcIcon name={step.icon} size="sm" decorative style={{ color: 'var(--modus-wc-color-primary)' } as React.CSSProperties} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--modus-wc-color-base-content)', marginBottom: 2 }}>
+                {step.label}
+              </div>
+              <div style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)', lineHeight: 1.5 }}>
+                {step.description}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ background: 'var(--modus-wc-color-base-100)', borderRadius: 8, padding: '0.875rem 1rem', display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+        <ModusWcIcon name="info" size="sm" decorative style={{ color: 'var(--modus-wc-color-primary)', flexShrink: 0, marginTop: 1 } as React.CSSProperties} />
+        <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)', lineHeight: 1.55 }}>
+          Steps must be completed in order. Your progress is saved so you can come back if you need to locate a file.
+        </p>
+      </div>
+    </div>
+  )
+}
+
 // ─── Bottom nav ───────────────────────────────────────────────────────────────
 
 function BottomNav({
@@ -251,6 +309,7 @@ function BottomNav({
   ctaDisabled,
   onBack,
   onCta,
+  hideStepIndicator = false,
 }: {
   stepIndex: number
   completedSteps: StepId[]
@@ -258,6 +317,7 @@ function BottomNav({
   ctaDisabled?: boolean
   onBack: () => void
   onCta: () => void
+  hideStepIndicator?: boolean
 }) {
   const [showPopover, setShowPopover] = useState(false)
 
@@ -274,15 +334,17 @@ function BottomNav({
 
       {/* Step indicator + popover anchor */}
       <div style={{ position: 'relative' }}>
-        <button
-          onClick={() => setShowPopover((v) => !v)}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0.4375rem 1rem', borderRadius: 99, border: '1.5px solid var(--modus-wc-color-base-200)', background: 'var(--modus-wc-color-base-page)', fontFamily: 'Open Sans, sans-serif', fontSize: '0.875rem', fontWeight: 600, color: 'var(--modus-wc-color-base-content)', cursor: 'pointer' }}
-        >
-          Step {stepIndex + 1} of {STEPS.length}
-          <ModusWcIcon name={showPopover ? 'expand_more' : 'expand_less'} size="xs" decorative style={{ color: 'var(--modus-wc-color-base-content-low-contrast)' } as React.CSSProperties} />
-        </button>
+        {!hideStepIndicator && (
+          <button
+            onClick={() => setShowPopover((v) => !v)}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0.4375rem 1rem', borderRadius: 99, border: '1.5px solid var(--modus-wc-color-base-200)', background: 'var(--modus-wc-color-base-page)', fontFamily: 'Open Sans, sans-serif', fontSize: '0.875rem', fontWeight: 600, color: 'var(--modus-wc-color-base-content)', cursor: 'pointer' }}
+          >
+            Step {stepIndex + 1} of {STEPS.length}
+            <ModusWcIcon name={showPopover ? 'expand_more' : 'expand_less'} size="xs" decorative style={{ color: 'var(--modus-wc-color-base-content-low-contrast)' } as React.CSSProperties} />
+          </button>
+        )}
 
-        {showPopover && (
+        {showPopover && !hideStepIndicator && (
           <StepPopover
             currentIndex={stepIndex}
             completedSteps={completedSteps}
@@ -592,7 +654,7 @@ export default function ImportWizardV2() {
   const navigate = useNavigate()
 
   const [stepIndex,       setStepIndex]       = useState(0)
-  const [subPhase,        setSubPhase]         = useState<SubPhase>('upload')
+  const [subPhase,        setSubPhase]         = useState<SubPhase>('intro')
   const [fileName,        setFileName]         = useState<string | null>(null)
   const [completedSteps,  setCompletedSteps]   = useState<StepId[]>(loadProgress)
   const [showImportConfirm, setShowImportConfirm] = useState(false)
@@ -618,18 +680,22 @@ export default function ImportWizardV2() {
   }
 
   const handleBack = () => {
-    if (subPhase === 'review') {
+    if (subPhase === 'intro') {
+      navigate('/onboarding')
+    } else if (subPhase === 'review') {
       setSubPhase('upload')
     } else if (stepIndex > 0) {
       setStepIndex(stepIndex - 1)
       setSubPhase('review')
     } else {
-      navigate('/onboarding')
+      setSubPhase('intro')
     }
   }
 
   const handleCta = () => {
-    if (subPhase === 'upload') {
+    if (subPhase === 'intro') {
+      setSubPhase('upload')
+    } else if (subPhase === 'upload') {
       setSubPhase('review')
     } else {
       setShowImportConfirm(true)
@@ -666,7 +732,7 @@ export default function ImportWizardV2() {
     )
   }
 
-  const ctaLabel   = subPhase === 'upload' ? 'Continue' : 'Import'
+  const ctaLabel    = subPhase === 'intro' ? "Let's get started" : subPhase === 'upload' ? 'Continue' : 'Import'
   const ctaDisabled = subPhase === 'upload' && !fileName
 
   return (
@@ -683,10 +749,10 @@ export default function ImportWizardV2() {
         <div className="wizard-header" style={{ borderBottom: '1px solid var(--modus-wc-color-base-200)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
           <div>
             <div style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--modus-wc-color-base-content)', marginBottom: 2 }}>
-              {step.label}
+              {subPhase === 'intro' ? 'Import Data' : step.label}
             </div>
             <div style={{ fontSize: '0.875rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>
-              {subPhase === 'upload' ? 'Upload your file' : 'Review your data'}
+              {subPhase === 'intro' ? '5 steps · takes about 10 minutes' : subPhase === 'upload' ? 'Upload your file' : 'Review your data'}
             </div>
           </div>
           <button
@@ -700,7 +766,9 @@ export default function ImportWizardV2() {
 
         {/* Scrollable content */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '2rem' }}>
-          {subPhase === 'upload' ? (
+          {subPhase === 'intro' ? (
+            <IntroScreen />
+          ) : subPhase === 'upload' ? (
             <UploadScreen step={step} fileName={fileName} onFileChange={setFileName} />
           ) : (
             <ReviewScreen step={step} />
@@ -715,6 +783,7 @@ export default function ImportWizardV2() {
           ctaDisabled={ctaDisabled}
           onBack={handleBack}
           onCta={handleCta}
+          hideStepIndicator={subPhase === 'intro'}
         />
       </div>
     </>
