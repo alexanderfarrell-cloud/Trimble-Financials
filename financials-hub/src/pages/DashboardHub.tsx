@@ -633,7 +633,7 @@ function GettingStartedDashboard() {
   const handleReset = () => {
     localStorage.removeItem('onboarding-path')
     localStorage.removeItem('getting-started-dismissed')
-    window.location.href = '/onboarding'
+    navigate('/onboarding')
   }
 
   return (

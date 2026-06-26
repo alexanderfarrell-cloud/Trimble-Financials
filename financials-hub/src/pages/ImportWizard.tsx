@@ -211,6 +211,7 @@ function ChecklistView({
   onStartStep: (id: StepId) => void
   onClose: () => void
 }) {
+  const navigate = useNavigate()
   const nextAvailable = STEP_ORDER.find((s) => !completedSteps.includes(s)) ?? null
   const allDone = completedSteps.length === STEP_ORDER.length
 
@@ -230,7 +231,7 @@ function ChecklistView({
               onClick={() => {
                 localStorage.removeItem('onboarding-path')
                 localStorage.removeItem('import-completed-steps')
-                window.location.href = '/onboarding'
+                navigate('/onboarding')
               }}
               title="Reset demo state"
               style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: '1px solid var(--modus-wc-color-base-200)', borderRadius: 6, padding: '3px 10px', cursor: 'pointer', fontFamily: 'Open Sans, sans-serif', fontSize: '0.72rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}
