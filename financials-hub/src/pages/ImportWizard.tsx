@@ -132,19 +132,6 @@ const TB_DEBIT_TOTAL  = 45_200.00
 const TB_CREDIT_TOTAL = 44_105.00
 const TB_DIFF         = TB_DEBIT_TOTAL - TB_CREDIT_TOTAL // $1,095.00
 
-// ─── Shared input style ───────────────────────────────────────────────────────
-
-const INPUT_STYLE: React.CSSProperties = {
-  padding: '0.5rem 0.75rem',
-  border: '1px solid var(--modus-wc-color-base-200)',
-  borderRadius: 6,
-  fontFamily: 'Open Sans, sans-serif',
-  fontSize: '0.875rem',
-  background: 'var(--modus-wc-color-base-page)',
-  color: 'var(--modus-wc-color-base-content)',
-  width: '100%',
-  boxSizing: 'border-box' as const,
-}
 
 const fmt = (n: number) =>
   n.toLocaleString('en-US', { style: 'currency', currency: 'USD' })

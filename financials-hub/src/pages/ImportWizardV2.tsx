@@ -119,8 +119,6 @@ const STEPS: ImportStepDef[] = [
   },
 ]
 
-const STEP_IDS: StepId[] = STEPS.map((s) => s.id)
-
 const TB_DEBIT_TOTAL  = 45_200.00
 const TB_CREDIT_TOTAL = 44_105.00
 const TB_DIFF         = TB_DEBIT_TOTAL - TB_CREDIT_TOTAL
