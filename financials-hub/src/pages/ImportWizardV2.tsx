@@ -641,8 +641,9 @@ function SuccessScreen({ onDone }: { onDone: () => void }) {
           Your opening balances, customers, jobs, vendors, and trial balance are now in Trimble Financials.
         </div>
       </div>
-      <button onClick={onDone} style={{ padding: '0.625rem 1.75rem', borderRadius: 99, border: 'none', background: 'var(--modus-wc-color-primary)', color: '#fff', fontFamily: 'Open Sans, sans-serif', fontSize: '0.9375rem', fontWeight: 700, cursor: 'pointer' }}>
-        Go to Dashboard
+      <button onClick={onDone} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0.625rem 1.5rem', borderRadius: 99, border: '1px solid var(--modus-wc-color-base-200)', background: 'none', color: 'var(--modus-wc-color-base-content-low-contrast)', fontFamily: 'Open Sans, sans-serif', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer' }}>
+        <ModusWcIcon name="refresh" size="xs" decorative />
+        Reset demo
       </button>
     </div>
   )
@@ -727,7 +728,11 @@ export default function ImportWizardV2() {
   if (done) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', background: 'var(--modus-wc-color-base-page)' }}>
-        <SuccessScreen onDone={() => navigate('/')} />
+        <SuccessScreen onDone={() => {
+          localStorage.removeItem('onboarding-path')
+          localStorage.removeItem('import-completed-steps')
+          navigate('/onboarding')
+        }} />
       </div>
     )
   }
