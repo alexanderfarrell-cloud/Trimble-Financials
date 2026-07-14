@@ -5,7 +5,7 @@ import { ModusWcIcon } from '@trimble-oss/moduswebcomponents-react'
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type StepId = 'bank-accounts' | 'customers' | 'jobs' | 'vendors' | 'trial-balance'
-type SubPhase = 'intro' | 'upload' | 'review'
+type SubPhase = 'intro' | 'upload' | 'review' | 'summary'
 
 interface ReviewColumn { key: string; label: string; align?: 'right' }
 interface ReviewRow    { [key: string]: string }
@@ -478,7 +478,7 @@ function ReviewScreen({ step }: { step: ImportStepDef }) {
       <p style={{ margin: 0, fontSize: '0.9375rem', color: 'var(--modus-wc-color-base-content)' }}>
         <strong>{count} {count === 1 ? 'record' : 'records'} detected.</strong>{' '}
         <span style={{ color: 'var(--modus-wc-color-base-content-low-contrast)' }}>
-          Please review them below and then click Import.
+          Please review them below and then click Next to continue.
         </span>
       </p>
 
@@ -506,82 +506,89 @@ function ReviewScreen({ step }: { step: ImportStepDef }) {
       </div>
 
       <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>
-        Importing will add these records to your Trimble Financials account. This action can be undone within 24 hours from Settings.
+        Your data will be reviewed and confirmed on the final summary screen before anything is imported.
       </p>
     </div>
   )
 }
 
-// ─── Import confirm modal ─────────────────────────────────────────────────────
+// ─── Summary screen ───────────────────────────────────────────────────────────
 
-function ImportConfirmModal({
-  step,
-  onConfirm,
-  onCancel,
-}: {
-  step: ImportStepDef
-  onConfirm: () => void
-  onCancel: () => void
-}) {
-  const count = step.reviewRows.length
+function SummaryScreen({ onFixReupload }: { onFixReupload: () => void }) {
+  const [showJournal, setShowJournal] = useState(false)
+  const totalRecords = STEPS.reduce((sum, s) => sum + s.reviewRows.length, 0)
+
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-      <div style={{ background: 'var(--modus-wc-color-base-page)', borderRadius: 16, padding: '1.75rem', maxWidth: 420, width: '100%', boxShadow: '0 8px 40px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-        <div>
-          <div style={{ fontWeight: 700, fontSize: '1.0625rem', color: 'var(--modus-wc-color-base-content)', marginBottom: 4 }}>Import {step.label}?</div>
-          <div style={{ fontSize: '0.875rem', color: 'var(--modus-wc-color-base-content-low-contrast)', lineHeight: 1.6 }}>
-            You're about to import <strong style={{ color: 'var(--modus-wc-color-base-content)' }}>{count} {count === 1 ? 'record' : 'records'}</strong>. Please confirm you've reviewed the data above.
-          </div>
-        </div>
-        <div style={{ background: 'var(--modus-wc-color-base-100)', border: '1px solid var(--modus-wc-color-base-200)', borderRadius: 8, padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>Records to import</span>
-          <span style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--modus-wc-color-base-content)' }}>{count}</span>
-        </div>
-        <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>
-          This action can be undone within 24 hours from Settings.
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: 640 }}>
+      <div>
+        <h2 style={{ margin: '0 0 0.5rem', fontSize: '1.25rem', fontWeight: 700, color: 'var(--modus-wc-color-base-content)', fontFamily: 'Open Sans, sans-serif' }}>
+          Review your import
+        </h2>
+        <p style={{ margin: 0, fontSize: '0.9375rem', color: 'var(--modus-wc-color-base-content-low-contrast)', lineHeight: 1.6 }}>
+          All 5 files are ready. Review the summary below then click Import All to commit your data.
         </p>
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-          <button onClick={onCancel} style={{ padding: '0.5rem 1.25rem', borderRadius: 99, border: '1.5px solid var(--modus-wc-color-base-200)', background: 'transparent', color: 'var(--modus-wc-color-base-content)', fontFamily: 'Open Sans, sans-serif', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
-          <button onClick={onConfirm} style={{ padding: '0.5rem 1.5rem', borderRadius: 99, border: 'none', background: 'var(--modus-wc-color-primary)', color: '#fff', fontFamily: 'Open Sans, sans-serif', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer' }}>Confirm Import</button>
+      </div>
+
+      {/* Step summary table */}
+      <div style={{ border: '1px solid var(--modus-wc-color-base-200)', borderRadius: 10, overflow: 'hidden' }}>
+        {STEPS.map((s, i) => (
+          <div
+            key={s.id}
+            style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '0.875rem 1rem', borderBottom: i < STEPS.length - 1 ? '1px solid var(--modus-wc-color-base-200)' : 'none', background: 'var(--modus-wc-color-base-page)' }}
+          >
+            <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--modus-wc-color-success, #006638)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <ModusWcIcon name="check" size="xs" decorative style={{ color: '#fff' } as React.CSSProperties} />
+            </div>
+            <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'color-mix(in srgb, var(--modus-wc-color-primary) 8%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <ModusWcIcon name={s.icon} size="sm" decorative style={{ color: 'var(--modus-wc-color-primary)' } as React.CSSProperties} />
+            </div>
+            <span style={{ flex: 1, fontWeight: 600, fontSize: '0.9375rem', color: 'var(--modus-wc-color-base-content)', fontFamily: 'Open Sans, sans-serif' }}>
+              {s.label}
+            </span>
+            <span style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)', fontFamily: 'Open Sans, sans-serif', whiteSpace: 'nowrap' }}>
+              {s.reviewRows.length} records
+            </span>
+          </div>
+        ))}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: 'var(--modus-wc-color-base-100)', borderTop: '1px solid var(--modus-wc-color-base-200)' }}>
+          <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--modus-wc-color-base-content)', fontFamily: 'Open Sans, sans-serif' }}>Total records</span>
+          <span style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--modus-wc-color-base-content)', fontFamily: 'Open Sans, sans-serif' }}>{totalRecords}</span>
         </div>
       </div>
-    </div>
-  )
-}
 
-// ─── Balance modal ────────────────────────────────────────────────────────────
-
-function BalanceModal({
-  onFixReupload,
-  onAutoBalance,
-}: {
-  onFixReupload: () => void
-  onAutoBalance: () => void
-}) {
-  const [showJournal, setShowJournal] = useState(false)
-  return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
-      <div style={{ background: 'var(--modus-wc-color-base-page)', borderRadius: 16, padding: '1.75rem', maxWidth: 460, width: '100%', boxShadow: '0 8px 40px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-        <div>
-          <div style={{ fontWeight: 700, fontSize: '1.0625rem', color: 'var(--modus-wc-color-base-content)', marginBottom: 4 }}>Debits and credits don't balance</div>
-          <div style={{ fontSize: '0.875rem', color: 'var(--modus-wc-color-base-content-low-contrast)', lineHeight: 1.55 }}>Your trial balance has a discrepancy. All accounts must balance before your books are complete.</div>
+      {/* Balance check — inline warning */}
+      <div style={{ border: '1.5px solid color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 50%, transparent)', borderRadius: 10, overflow: 'hidden', background: 'color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 5%, transparent)' }}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '1rem', borderBottom: '1px solid color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 30%, transparent)' }}>
+          <ModusWcIcon name="warning" size="sm" decorative style={{ color: '#7a5200', flexShrink: 0, marginTop: 1 } as React.CSSProperties} />
+          <div>
+            <div style={{ fontWeight: 700, fontSize: '0.9375rem', color: '#7a5200', marginBottom: 3 }}>Trial balance discrepancy</div>
+            <div style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content)', lineHeight: 1.5 }}>
+              Your debits and credits don't balance. Resolve this before importing or let Trimble auto-balance your books.
+            </div>
+          </div>
         </div>
 
-        <div style={{ background: 'var(--modus-wc-color-base-100)', border: '1px solid var(--modus-wc-color-base-200)', borderRadius: 8, overflow: 'hidden' }}>
+        {/* Debit / credit summary */}
+        <div style={{ background: 'var(--modus-wc-color-base-page)' }}>
           {[
             { label: 'Total Debits',  value: fmt(TB_DEBIT_TOTAL),  highlight: false },
             { label: 'Total Credits', value: fmt(TB_CREDIT_TOTAL), highlight: false },
             { label: 'Difference',    value: fmt(TB_DIFF),         highlight: true  },
           ].map(({ label, value, highlight }, i) => (
-            <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.625rem 1rem', borderBottom: i < 2 ? '1px solid var(--modus-wc-color-base-200)' : 'none', background: highlight ? 'color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 8%, transparent)' : 'transparent' }}>
+            <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5625rem 1rem', borderBottom: i < 2 ? '1px solid var(--modus-wc-color-base-200)' : 'none', background: highlight ? 'color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 8%, transparent)' : 'transparent' }}>
               <span style={{ fontSize: '0.875rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>{label}</span>
               <span style={{ fontSize: '0.875rem', fontWeight: 700, color: highlight ? '#7a5200' : 'var(--modus-wc-color-base-content)' }}>{value}</span>
             </div>
           ))}
         </div>
 
-        <div style={{ border: '1px solid var(--modus-wc-color-base-200)', borderRadius: 8, overflow: 'hidden' }}>
-          <button onClick={() => setShowJournal((v) => !v)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', background: 'var(--modus-wc-color-base-page)', border: 'none', cursor: 'pointer', fontFamily: 'Open Sans, sans-serif', gap: 8 }}>
+        {/* Auto-balance expander */}
+        <div style={{ borderTop: '1px solid color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 30%, transparent)' }}>
+          <button
+            onClick={() => setShowJournal((v) => !v)}
+            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'Open Sans, sans-serif', gap: 8 }}
+          >
             <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <ModusWcIcon name="auto_fix_high" size="xs" decorative style={{ color: 'var(--modus-wc-color-primary)' } as React.CSSProperties} />
               <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--modus-wc-color-primary)' }}>View auto-balance adjustment</span>
@@ -589,7 +596,7 @@ function BalanceModal({
             <ModusWcIcon name={showJournal ? 'expand_less' : 'expand_more'} size="xs" decorative style={{ color: 'var(--modus-wc-color-base-content-low-contrast)' } as React.CSSProperties} />
           </button>
           {showJournal && (
-            <div style={{ padding: '0 0 0.75rem', borderTop: '1px solid var(--modus-wc-color-base-200)' }}>
+            <div style={{ borderTop: '1px solid var(--modus-wc-color-base-200)', background: 'var(--modus-wc-color-base-page)', padding: '0 0 0.75rem' }}>
               <div style={{ padding: '0.625rem 1rem 0.375rem', fontSize: '0.75rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>
                 Trimble will create the following journal entry to balance your books:
               </div>
@@ -603,7 +610,7 @@ function BalanceModal({
                 </thead>
                 <tbody>
                   <tr>
-                    <td>Jun 25, 2026</td>
+                    <td>Jul 14, 2026</td>
                     <td>Retained Earnings</td>
                     <td>Opening balance adjustment</td>
                     <td className="amount">—</td>
@@ -615,12 +622,60 @@ function BalanceModal({
           )}
         </div>
 
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
-          <button onClick={onFixReupload} style={{ padding: '0.5rem 1.25rem', borderRadius: 99, border: '1.5px solid var(--modus-wc-color-base-200)', background: 'transparent', color: 'var(--modus-wc-color-base-content)', fontFamily: 'Open Sans, sans-serif', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer' }}>Fix and re-upload</button>
-          <button onClick={onAutoBalance} style={{ padding: '0.5rem 1.5rem', borderRadius: 99, border: 'none', background: 'var(--modus-wc-color-primary)', color: '#fff', fontFamily: 'Open Sans, sans-serif', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <ModusWcIcon name="auto_fix_high" size="xs" decorative />
-            Apply auto-balance
+        {/* Fix link */}
+        <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 30%, transparent)', display: 'flex', justifyContent: 'flex-end' }}>
+          <button
+            onClick={onFixReupload}
+            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--modus-wc-color-primary)', fontFamily: 'Open Sans, sans-serif', display: 'flex', alignItems: 'center', gap: 5 }}
+          >
+            <ModusWcIcon name="upload_file" size="xs" decorative />
+            Fix and re-upload trial balance
           </button>
+        </div>
+      </div>
+
+      <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)', lineHeight: 1.55 }}>
+        Clicking <strong style={{ color: 'var(--modus-wc-color-base-content)' }}>Import All</strong> will add all records to your Trimble Financials account. This action can be undone within 24 hours from Settings.
+      </p>
+    </div>
+  )
+}
+
+// ─── Final confirm modal ──────────────────────────────────────────────────────
+
+function ConfirmAllModal({
+  onConfirm,
+  onCancel,
+}: {
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  const totalRecords = STEPS.reduce((sum, s) => sum + s.reviewRows.length, 0)
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 300, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+      <div style={{ background: 'var(--modus-wc-color-base-page)', borderRadius: 16, padding: '1.75rem', maxWidth: 420, width: '100%', boxShadow: '0 8px 40px rgba(0,0,0,0.2)', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: '1.0625rem', color: 'var(--modus-wc-color-base-content)', marginBottom: 4 }}>Import all data?</div>
+          <div style={{ fontSize: '0.875rem', color: 'var(--modus-wc-color-base-content-low-contrast)', lineHeight: 1.6 }}>
+            You're about to import <strong style={{ color: 'var(--modus-wc-color-base-content)' }}>{totalRecords} records</strong> across 5 datasets into Trimble Financials.
+          </div>
+        </div>
+
+        <div style={{ background: 'var(--modus-wc-color-base-100)', border: '1px solid var(--modus-wc-color-base-200)', borderRadius: 8, overflow: 'hidden' }}>
+          {STEPS.map((s, i) => (
+            <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5rem 1rem', borderBottom: i < STEPS.length - 1 ? '1px solid var(--modus-wc-color-base-200)' : 'none' }}>
+              <span style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content)' }}>{s.label}</span>
+              <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--modus-wc-color-base-content-low-contrast)' }}>{s.reviewRows.length} records</span>
+            </div>
+          ))}
+        </div>
+
+        <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>
+          This action can be undone within 24 hours from Settings.
+        </p>
+        <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+          <button onClick={onCancel} style={{ padding: '0.5rem 1.25rem', borderRadius: 99, border: '1.5px solid var(--modus-wc-color-base-200)', background: 'transparent', color: 'var(--modus-wc-color-base-content)', fontFamily: 'Open Sans, sans-serif', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer' }}>Cancel</button>
+          <button onClick={onConfirm} style={{ padding: '0.5rem 1.5rem', borderRadius: 99, border: 'none', background: 'var(--modus-wc-color-primary)', color: '#fff', fontFamily: 'Open Sans, sans-serif', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer' }}>Import All</button>
         </div>
       </div>
     </div>
@@ -658,8 +713,7 @@ export default function ImportWizardV2() {
   const [subPhase,        setSubPhase]         = useState<SubPhase>('intro')
   const [fileName,        setFileName]         = useState<string | null>(null)
   const [completedSteps,  setCompletedSteps]   = useState<StepId[]>(loadProgress)
-  const [showImportConfirm, setShowImportConfirm] = useState(false)
-  const [showBalanceModal,  setShowBalanceModal]  = useState(false)
+  const [showFinalConfirm, setShowFinalConfirm] = useState(false)
   const [done,            setDone]             = useState(false)
 
   const step = STEPS[stepIndex]
@@ -676,13 +730,16 @@ export default function ImportWizardV2() {
       setSubPhase('upload')
       setFileName(null)
     } else {
-      setDone(true)
+      setSubPhase('summary')
     }
   }
 
   const handleBack = () => {
     if (subPhase === 'intro') {
       navigate('/onboarding')
+    } else if (subPhase === 'summary') {
+      setStepIndex(STEPS.length - 1)
+      setSubPhase('review')
     } else if (subPhase === 'review') {
       setSubPhase('upload')
     } else if (stepIndex > 0) {
@@ -698,29 +755,17 @@ export default function ImportWizardV2() {
       setSubPhase('upload')
     } else if (subPhase === 'upload') {
       setSubPhase('review')
-    } else {
-      setShowImportConfirm(true)
-    }
-  }
-
-  const handleConfirmImport = () => {
-    setShowImportConfirm(false)
-    if (step.id === 'trial-balance') {
-      setShowBalanceModal(true)
-    } else {
+    } else if (subPhase === 'review') {
       markComplete(step.id)
       advance()
+    } else {
+      setShowFinalConfirm(true)
     }
-  }
-
-  const handleAutoBalance = () => {
-    setShowBalanceModal(false)
-    markComplete('trial-balance')
-    advance()
   }
 
   const handleFixReupload = () => {
-    setShowBalanceModal(false)
+    const tbIndex = STEPS.findIndex((s) => s.id === 'trial-balance')
+    setStepIndex(tbIndex)
     setSubPhase('upload')
     setFileName(null)
   }
@@ -737,16 +782,19 @@ export default function ImportWizardV2() {
     )
   }
 
-  const ctaLabel    = subPhase === 'intro' ? "Let's get started" : subPhase === 'upload' ? 'Continue' : 'Import'
+  const ctaLabel    = subPhase === 'intro'   ? "Let's get started"
+                    : subPhase === 'upload'  ? 'Continue'
+                    : subPhase === 'review'  ? (stepIndex < STEPS.length - 1 ? 'Next' : 'Review summary')
+                    : 'Import All'
   const ctaDisabled = subPhase === 'upload' && !fileName
 
   return (
     <>
-      {showImportConfirm && (
-        <ImportConfirmModal step={step} onConfirm={handleConfirmImport} onCancel={() => setShowImportConfirm(false)} />
-      )}
-      {showBalanceModal && (
-        <BalanceModal onFixReupload={handleFixReupload} onAutoBalance={handleAutoBalance} />
+      {showFinalConfirm && (
+        <ConfirmAllModal
+          onConfirm={() => { setShowFinalConfirm(false); setDone(true) }}
+          onCancel={() => setShowFinalConfirm(false)}
+        />
       )}
 
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100%', background: 'var(--modus-wc-color-base-page)' }}>
@@ -754,10 +802,13 @@ export default function ImportWizardV2() {
         <div className="wizard-header" style={{ borderBottom: '1px solid var(--modus-wc-color-base-200)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
           <div>
             <div style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--modus-wc-color-base-content)', marginBottom: 2 }}>
-              {subPhase === 'intro' ? 'Import Data' : step.label}
+              {subPhase === 'intro' ? 'Import Data' : subPhase === 'summary' ? 'Import Data' : step.label}
             </div>
             <div style={{ fontSize: '0.875rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>
-              {subPhase === 'intro' ? '5 steps · takes about 10 minutes' : subPhase === 'upload' ? 'Upload your file' : 'Review your data'}
+              {subPhase === 'intro'   ? '5 steps · takes about 10 minutes'
+               : subPhase === 'upload'  ? 'Upload your file'
+               : subPhase === 'review'  ? 'Review your data'
+               : 'Final review before import'}
             </div>
           </div>
           <button
@@ -775,8 +826,10 @@ export default function ImportWizardV2() {
             <IntroScreen />
           ) : subPhase === 'upload' ? (
             <UploadScreen step={step} fileName={fileName} onFileChange={setFileName} />
-          ) : (
+          ) : subPhase === 'review' ? (
             <ReviewScreen step={step} />
+          ) : (
+            <SummaryScreen onFixReupload={handleFixReupload} />
           )}
         </div>
 
@@ -788,7 +841,7 @@ export default function ImportWizardV2() {
           ctaDisabled={ctaDisabled}
           onBack={handleBack}
           onCta={handleCta}
-          hideStepIndicator={subPhase === 'intro'}
+          hideStepIndicator={subPhase === 'intro' || subPhase === 'summary'}
         />
       </div>
     </>
