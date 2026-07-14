@@ -514,7 +514,15 @@ function ReviewScreen({ step }: { step: ImportStepDef }) {
 
 // ─── Summary screen ───────────────────────────────────────────────────────────
 
-function SummaryScreen({ onFixReupload }: { onFixReupload: () => void }) {
+function SummaryScreen({
+  onFixReupload,
+  autoBalanceAccepted,
+  onAutoBalanceAccept,
+}: {
+  onFixReupload: () => void
+  autoBalanceAccepted: boolean
+  onAutoBalanceAccept: () => void
+}) {
   const [showJournal, setShowJournal] = useState(false)
   const totalRecords = STEPS.reduce((sum, s) => sum + s.reviewRows.length, 0)
 
@@ -556,86 +564,117 @@ function SummaryScreen({ onFixReupload }: { onFixReupload: () => void }) {
         </div>
       </div>
 
-      {/* Balance check — inline warning */}
-      <div style={{ border: '1.5px solid color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 50%, transparent)', borderRadius: 10, overflow: 'hidden', background: 'color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 5%, transparent)' }}>
-        {/* Header */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '1rem', borderBottom: '1px solid color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 30%, transparent)' }}>
-          <ModusWcIcon name="warning" size="sm" decorative style={{ color: '#7a5200', flexShrink: 0, marginTop: 1 } as React.CSSProperties} />
-          <div>
-            <div style={{ fontWeight: 700, fontSize: '0.9375rem', color: '#7a5200', marginBottom: 3 }}>Trial balance discrepancy</div>
-            <div style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content)', lineHeight: 1.5 }}>
-              Your debits and credits don't balance. Resolve this before importing or let Trimble auto-balance your books.
+      {/* Balance check — accepted state */}
+      {autoBalanceAccepted ? (
+        <div style={{ border: '1.5px solid color-mix(in srgb, var(--modus-wc-color-success, #006638) 40%, transparent)', borderRadius: 10, padding: '1rem', display: 'flex', alignItems: 'center', gap: 12, background: 'color-mix(in srgb, var(--modus-wc-color-success, #006638) 5%, transparent)' }}>
+          <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--modus-wc-color-success, #006638)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <ModusWcIcon name="check" size="xs" decorative style={{ color: '#fff' } as React.CSSProperties} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--modus-wc-color-base-content)', marginBottom: 2 }}>Auto-balance accepted</div>
+            <div style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)', lineHeight: 1.5 }}>
+              A journal entry of <strong>{fmt(TB_DIFF)}</strong> to Retained Earnings will be created on import.
             </div>
           </div>
-        </div>
-
-        {/* Debit / credit summary */}
-        <div style={{ background: 'var(--modus-wc-color-base-page)' }}>
-          {[
-            { label: 'Total Debits',  value: fmt(TB_DEBIT_TOTAL),  highlight: false },
-            { label: 'Total Credits', value: fmt(TB_CREDIT_TOTAL), highlight: false },
-            { label: 'Difference',    value: fmt(TB_DIFF),         highlight: true  },
-          ].map(({ label, value, highlight }, i) => (
-            <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5625rem 1rem', borderBottom: i < 2 ? '1px solid var(--modus-wc-color-base-200)' : 'none', background: highlight ? 'color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 8%, transparent)' : 'transparent' }}>
-              <span style={{ fontSize: '0.875rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>{label}</span>
-              <span style={{ fontSize: '0.875rem', fontWeight: 700, color: highlight ? '#7a5200' : 'var(--modus-wc-color-base-content)' }}>{value}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* Auto-balance expander */}
-        <div style={{ borderTop: '1px solid color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 30%, transparent)' }}>
-          <button
-            onClick={() => setShowJournal((v) => !v)}
-            style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'Open Sans, sans-serif', gap: 8 }}
-          >
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <ModusWcIcon name="auto_fix_high" size="xs" decorative style={{ color: 'var(--modus-wc-color-primary)' } as React.CSSProperties} />
-              <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--modus-wc-color-primary)' }}>View auto-balance adjustment</span>
-            </span>
-            <ModusWcIcon name={showJournal ? 'expand_less' : 'expand_more'} size="xs" decorative style={{ color: 'var(--modus-wc-color-base-content-low-contrast)' } as React.CSSProperties} />
-          </button>
-          {showJournal && (
-            <div style={{ borderTop: '1px solid var(--modus-wc-color-base-200)', background: 'var(--modus-wc-color-base-page)', padding: '0 0 0.75rem' }}>
-              <div style={{ padding: '0.625rem 1rem 0.375rem', fontSize: '0.75rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>
-                Trimble will create the following journal entry to balance your books:
-              </div>
-              <table className="data-table" style={{ width: '100%' }}>
-                <thead>
-                  <tr style={{ background: 'var(--modus-wc-color-base-100)' }}>
-                    {['Date', 'Account', 'Description', 'Debit', 'Credit'].map((h) => (
-                      <th key={h} style={{ textAlign: h === 'Debit' || h === 'Credit' ? 'right' : 'left' }}>{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>Jul 14, 2026</td>
-                    <td>Retained Earnings</td>
-                    <td>Opening balance adjustment</td>
-                    <td className="amount">—</td>
-                    <td className="amount">{fmt(TB_DIFF)}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-
-        {/* Fix link */}
-        <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 30%, transparent)', display: 'flex', justifyContent: 'flex-end' }}>
           <button
             onClick={onFixReupload}
-            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--modus-wc-color-primary)', fontFamily: 'Open Sans, sans-serif', display: 'flex', alignItems: 'center', gap: 5 }}
+            style={{ background: 'none', border: 'none', padding: '3px 8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, color: 'var(--modus-wc-color-base-content-low-contrast)', fontFamily: 'Open Sans, sans-serif', borderRadius: 4, whiteSpace: 'nowrap' }}
           >
-            <ModusWcIcon name="upload_file" size="xs" decorative />
-            Fix and re-upload trial balance
+            Re-upload instead
           </button>
         </div>
-      </div>
+      ) : (
+        /* Balance check — inline warning */
+        <div style={{ border: '1.5px solid color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 50%, transparent)', borderRadius: 10, overflow: 'hidden', background: 'color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 5%, transparent)' }}>
+          {/* Header */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '1rem', borderBottom: '1px solid color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 30%, transparent)' }}>
+            <ModusWcIcon name="warning" size="sm" decorative style={{ color: '#7a5200', flexShrink: 0, marginTop: 1 } as React.CSSProperties} />
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '0.9375rem', color: '#7a5200', marginBottom: 3 }}>Trial balance discrepancy</div>
+              <div style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content)', lineHeight: 1.5 }}>
+                Your debits and credits don't balance. Choose an option below before importing.
+              </div>
+            </div>
+          </div>
+
+          {/* Debit / credit summary */}
+          <div style={{ background: 'var(--modus-wc-color-base-page)' }}>
+            {[
+              { label: 'Total Debits',  value: fmt(TB_DEBIT_TOTAL),  highlight: false },
+              { label: 'Total Credits', value: fmt(TB_CREDIT_TOTAL), highlight: false },
+              { label: 'Difference',    value: fmt(TB_DIFF),         highlight: true  },
+            ].map(({ label, value, highlight }, i) => (
+              <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5625rem 1rem', borderBottom: i < 2 ? '1px solid var(--modus-wc-color-base-200)' : 'none', background: highlight ? 'color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 8%, transparent)' : 'transparent' }}>
+                <span style={{ fontSize: '0.875rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>{label}</span>
+                <span style={{ fontSize: '0.875rem', fontWeight: 700, color: highlight ? '#7a5200' : 'var(--modus-wc-color-base-content)' }}>{value}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Auto-balance expander */}
+          <div style={{ borderTop: '1px solid color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 30%, transparent)' }}>
+            <button
+              onClick={() => setShowJournal((v) => !v)}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'Open Sans, sans-serif', gap: 8 }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <ModusWcIcon name="auto_fix_high" size="xs" decorative style={{ color: 'var(--modus-wc-color-primary)' } as React.CSSProperties} />
+                <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--modus-wc-color-primary)' }}>View auto-balance adjustment</span>
+              </span>
+              <ModusWcIcon name={showJournal ? 'expand_less' : 'expand_more'} size="xs" decorative style={{ color: 'var(--modus-wc-color-base-content-low-contrast)' } as React.CSSProperties} />
+            </button>
+            {showJournal && (
+              <div style={{ borderTop: '1px solid var(--modus-wc-color-base-200)', background: 'var(--modus-wc-color-base-page)', padding: '0 0 0.75rem' }}>
+                <div style={{ padding: '0.625rem 1rem 0.375rem', fontSize: '0.75rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>
+                  Trimble will create the following journal entry to balance your books:
+                </div>
+                <table className="data-table" style={{ width: '100%' }}>
+                  <thead>
+                    <tr style={{ background: 'var(--modus-wc-color-base-100)' }}>
+                      {['Date', 'Account', 'Description', 'Debit', 'Credit'].map((h) => (
+                        <th key={h} style={{ textAlign: h === 'Debit' || h === 'Credit' ? 'right' : 'left' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Jul 14, 2026</td>
+                      <td>Retained Earnings</td>
+                      <td>Opening balance adjustment</td>
+                      <td className="amount">—</td>
+                      <td className="amount">{fmt(TB_DIFF)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div style={{ padding: '0.875rem 1rem', borderTop: '1px solid color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 30%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12 }}>
+            <button
+              onClick={onFixReupload}
+              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--modus-wc-color-base-content-low-contrast)', fontFamily: 'Open Sans, sans-serif', display: 'flex', alignItems: 'center', gap: 5 }}
+            >
+              <ModusWcIcon name="upload_file" size="xs" decorative />
+              Fix and re-upload
+            </button>
+            <button
+              onClick={onAutoBalanceAccept}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.5rem 1.25rem', borderRadius: 99, border: 'none', background: 'var(--modus-wc-color-primary)', color: '#fff', fontFamily: 'Open Sans, sans-serif', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer' }}
+            >
+              <ModusWcIcon name="auto_fix_high" size="xs" decorative />
+              Apply auto-balance
+            </button>
+          </div>
+        </div>
+      )}
 
       <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)', lineHeight: 1.55 }}>
-        Clicking <strong style={{ color: 'var(--modus-wc-color-base-content)' }}>Import All</strong> will add all records to your Trimble Financials account. This action can be undone within 24 hours from Settings.
+        {autoBalanceAccepted
+          ? <>Clicking <strong style={{ color: 'var(--modus-wc-color-base-content)' }}>Import All</strong> will add all records and apply the auto-balance journal entry. This action can be undone within 24 hours from Settings.</>
+          : <>Resolve the trial balance discrepancy above to enable <strong style={{ color: 'var(--modus-wc-color-base-content)' }}>Import All</strong>.</>
+        }
       </p>
     </div>
   )
@@ -644,9 +683,11 @@ function SummaryScreen({ onFixReupload }: { onFixReupload: () => void }) {
 // ─── Final confirm modal ──────────────────────────────────────────────────────
 
 function ConfirmAllModal({
+  autoBalanceAccepted,
   onConfirm,
   onCancel,
 }: {
+  autoBalanceAccepted: boolean
   onConfirm: () => void
   onCancel: () => void
 }) {
@@ -669,6 +710,15 @@ function ConfirmAllModal({
             </div>
           ))}
         </div>
+
+        {autoBalanceAccepted && (
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '0.75rem 1rem', borderRadius: 8, border: '1px solid color-mix(in srgb, var(--modus-wc-color-primary) 30%, transparent)', background: 'color-mix(in srgb, var(--modus-wc-color-primary) 5%, transparent)' }}>
+            <ModusWcIcon name="auto_fix_high" size="xs" decorative style={{ color: 'var(--modus-wc-color-primary)', flexShrink: 0, marginTop: 2 } as React.CSSProperties} />
+            <span style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content)', lineHeight: 1.5 }}>
+              An auto-balance journal entry of <strong>{fmt(TB_DIFF)}</strong> to Retained Earnings will also be created.
+            </span>
+          </div>
+        )}
 
         <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>
           This action can be undone within 24 hours from Settings.
@@ -713,8 +763,9 @@ export default function ImportWizardV2() {
   const [subPhase,        setSubPhase]         = useState<SubPhase>('intro')
   const [fileName,        setFileName]         = useState<string | null>(null)
   const [completedSteps,  setCompletedSteps]   = useState<StepId[]>(loadProgress)
-  const [showFinalConfirm, setShowFinalConfirm] = useState(false)
-  const [done,            setDone]             = useState(false)
+  const [showFinalConfirm,    setShowFinalConfirm]    = useState(false)
+  const [autoBalanceAccepted, setAutoBalanceAccepted] = useState(false)
+  const [done,                setDone]                = useState(false)
 
   const step = STEPS[stepIndex]
 
@@ -768,6 +819,7 @@ export default function ImportWizardV2() {
     setStepIndex(tbIndex)
     setSubPhase('upload')
     setFileName(null)
+    setAutoBalanceAccepted(false)
   }
 
   if (done) {
@@ -786,12 +838,14 @@ export default function ImportWizardV2() {
                     : subPhase === 'upload'  ? 'Continue'
                     : subPhase === 'review'  ? (stepIndex < STEPS.length - 1 ? 'Next' : 'Review summary')
                     : 'Import All'
-  const ctaDisabled = subPhase === 'upload' && !fileName
+  const ctaDisabled = (subPhase === 'upload' && !fileName)
+                   || (subPhase === 'summary' && !autoBalanceAccepted)
 
   return (
     <>
       {showFinalConfirm && (
         <ConfirmAllModal
+          autoBalanceAccepted={autoBalanceAccepted}
           onConfirm={() => { setShowFinalConfirm(false); setDone(true) }}
           onCancel={() => setShowFinalConfirm(false)}
         />
@@ -829,7 +883,11 @@ export default function ImportWizardV2() {
           ) : subPhase === 'review' ? (
             <ReviewScreen step={step} />
           ) : (
-            <SummaryScreen onFixReupload={handleFixReupload} />
+            <SummaryScreen
+              onFixReupload={handleFixReupload}
+              autoBalanceAccepted={autoBalanceAccepted}
+              onAutoBalanceAccept={() => setAutoBalanceAccepted(true)}
+            />
           )}
         </div>
 
