@@ -275,9 +275,6 @@ function IntroScreen() {
                 {i + 1}
               </span>
             </div>
-            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'color-mix(in srgb, var(--modus-wc-color-primary) 8%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <ModusWcIcon name={step.icon} size="sm" decorative style={{ color: 'var(--modus-wc-color-primary)' } as React.CSSProperties} />
-            </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--modus-wc-color-base-content)', marginBottom: 2 }}>
                 {step.label}
@@ -546,9 +543,6 @@ function SummaryScreen({
           >
             <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--modus-wc-color-success, #006638)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <ModusWcIcon name="check" size="xs" decorative style={{ color: '#fff' } as React.CSSProperties} />
-            </div>
-            <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'color-mix(in srgb, var(--modus-wc-color-primary) 8%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <ModusWcIcon name={s.icon} size="sm" decorative style={{ color: 'var(--modus-wc-color-primary)' } as React.CSSProperties} />
             </div>
             <span style={{ flex: 1, fontWeight: 600, fontSize: '0.9375rem', color: 'var(--modus-wc-color-base-content)', fontFamily: 'Open Sans, sans-serif' }}>
               {s.label}
