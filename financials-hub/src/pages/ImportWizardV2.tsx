@@ -650,7 +650,6 @@ function SummaryScreen({
               onClick={onFixReupload}
               style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--modus-wc-color-base-content-low-contrast)', fontFamily: 'Open Sans, sans-serif', display: 'flex', alignItems: 'center', gap: 5 }}
             >
-              <ModusWcIcon name="upload_file" size="xs" decorative />
               Fix and re-upload
             </button>
             <button
