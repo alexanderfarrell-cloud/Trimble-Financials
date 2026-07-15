@@ -21,12 +21,15 @@ const MOCK_FILE_ERRORS: FileError[] = [
 interface ReviewColumn { key: string; label: string; align?: 'right' }
 interface ReviewRow    { [key: string]: string }
 
+interface SummaryStat { label: string; value: string | number }
+
 interface ImportStepDef {
   id: StepId
   label: string
   icon: string
   description: string
   simulatedTotal: number
+  summaryStats: SummaryStat[]
   reviewColumns: ReviewColumn[]
   reviewRows: ReviewRow[]
 }
@@ -40,6 +43,11 @@ const STEPS: ImportStepDef[] = [
     icon: 'account_balance',
     description: 'Import your bank and credit card accounts with opening balances.',
     simulatedTotal: 12,
+    summaryStats: [
+      { label: 'Bank accounts',   value: 7 },
+      { label: 'Credit accounts', value: 5 },
+      { label: 'Total balance',   value: '$44,900.00' },
+    ],
     reviewColumns: [
       { key: 'name',    label: 'Account Name' },
       { key: 'type',    label: 'Type' },
@@ -65,6 +73,11 @@ const STEPS: ImportStepDef[] = [
     icon: 'contacts',
     description: 'Import your customer list with contact information.',
     simulatedTotal: 84,
+    summaryStats: [
+      { label: 'With open balances', value: 61 },
+      { label: 'Zero balance',       value: 23 },
+      { label: 'Total AR',           value: '$247,500.00' },
+    ],
     reviewColumns: [
       { key: 'id',      label: 'Customer ID' },
       { key: 'company', label: 'Company' },
@@ -91,6 +104,11 @@ const STEPS: ImportStepDef[] = [
     icon: 'assignment',
     description: 'Import existing jobs with contract values and dates.',
     simulatedTotal: 47,
+    summaryStats: [
+      { label: 'Active',  value: 38 },
+      { label: 'Pending', value:  7 },
+      { label: 'On hold', value:  2 },
+    ],
     reviewColumns: [
       { key: 'name',     label: 'Job Name' },
       { key: 'customer', label: 'Customer' },
@@ -117,6 +135,12 @@ const STEPS: ImportStepDef[] = [
     icon: 'business',
     description: 'Import vendors and outstanding payable balances.',
     simulatedTotal: 38,
+    summaryStats: [
+      { label: 'Net 15', value:  8 },
+      { label: 'Net 30', value: 18 },
+      { label: 'Net 45', value: 12 },
+      { label: 'Total AP', value: '$27,800.00' },
+    ],
     reviewColumns: [
       { key: 'id',      label: 'Vendor ID' },
       { key: 'company', label: 'Company' },
@@ -143,6 +167,12 @@ const STEPS: ImportStepDef[] = [
     icon: 'balance',
     description: 'Import your chart of accounts with opening debit and credit balances.',
     simulatedTotal: 42,
+    summaryStats: [
+      { label: 'Asset accounts',     value: 18 },
+      { label: 'Liability accounts', value:  9 },
+      { label: 'Equity accounts',    value:  8 },
+      { label: 'Revenue accounts',   value:  7 },
+    ],
     reviewColumns: [
       { key: 'account',  label: 'Account' },
       { key: 'category', label: 'Category' },
@@ -428,6 +458,7 @@ function UploadScreen({
   fileErrors,
   skippable,
   onFileChange,
+  onUploadWithErrors,
   onSkipRequest,
 }: {
   step: ImportStepDef
@@ -435,6 +466,7 @@ function UploadScreen({
   fileErrors: FileError[]
   skippable: boolean
   onFileChange: (n: string | null) => void
+  onUploadWithErrors: () => void
   onSkipRequest: () => void
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
@@ -515,7 +547,7 @@ function UploadScreen({
               Use sample data
             </button>
             <button
-              onClick={() => onFileChange('errors.csv')}
+              onClick={onUploadWithErrors}
               style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '0.625rem 1rem', borderRadius: 8, border: '1.5px solid color-mix(in srgb, var(--modus-wc-color-danger, #da212c) 40%, transparent)', background: 'color-mix(in srgb, var(--modus-wc-color-danger, #da212c) 4%, transparent)', color: 'var(--modus-wc-color-danger, #da212c)', fontFamily: 'Open Sans, sans-serif', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer' }}
             >
               <ModusWcIcon name="error" size="xs" decorative />
@@ -526,45 +558,52 @@ function UploadScreen({
       ) : fileErrors.length > 0 ? (
         /* ── Error state ─────────────────────────────────────────────── */
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {/* File chip */}
-          <div style={{ border: '2px solid color-mix(in srgb, var(--modus-wc-color-danger, #da212c) 50%, transparent)', borderRadius: 10, padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: 14, background: 'color-mix(in srgb, var(--modus-wc-color-danger, #da212c) 4%, transparent)' }}>
-            <ModusWcIcon name="error" size="md" decorative style={{ color: 'var(--modus-wc-color-danger, #da212c)', flexShrink: 0 } as React.CSSProperties} />
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--modus-wc-color-base-content)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fileName}</div>
-              <div style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-danger, #da212c)', fontWeight: 600 }}>
-                {fileErrors.length} error{fileErrors.length !== 1 ? 's' : ''} found — fix your CSV and re-upload
-              </div>
-            </div>
-            <button onClick={() => onFileChange(null)} aria-label="Remove file" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, borderRadius: 4, color: 'var(--modus-wc-color-base-content-low-contrast)', display: 'flex' }}>
+
+          {/* File chip — neutral, just shows the filename */}
+          <div style={{ border: '1.5px solid var(--modus-wc-color-base-200)', borderRadius: 10, padding: '0.875rem 1.25rem', display: 'flex', alignItems: 'center', gap: 12, background: 'var(--modus-wc-color-base-page)' }}>
+            <ModusWcIcon name="description" size="md" decorative style={{ color: 'var(--modus-wc-color-base-content-low-contrast)', flexShrink: 0 } as React.CSSProperties} />
+            <span style={{ flex: 1, fontWeight: 600, fontSize: '0.9375rem', color: 'var(--modus-wc-color-base-content)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'Open Sans, sans-serif' }}>
+              {fileName}
+            </span>
+            <button onClick={() => onFileChange(null)} aria-label="Remove file" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, borderRadius: 4, color: 'var(--modus-wc-color-base-content-low-contrast)', display: 'flex', flexShrink: 0 }}>
               <ModusWcIcon name="close" size="xs" decorative />
             </button>
           </div>
 
-          {/* Error accordion */}
-          <div style={{ border: '1px solid color-mix(in srgb, var(--modus-wc-color-danger, #da212c) 30%, transparent)', borderRadius: 10, overflow: 'hidden' }}>
+          {/* Error notification — standalone, no toggle */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '0.875rem 1rem', borderRadius: 10, border: '1.5px solid color-mix(in srgb, var(--modus-wc-color-danger, #da212c) 40%, transparent)', background: 'color-mix(in srgb, var(--modus-wc-color-danger, #da212c) 6%, transparent)' }}>
+            <ModusWcIcon name="error" size="sm" decorative style={{ color: 'var(--modus-wc-color-danger, #da212c)', flexShrink: 0, marginTop: 1 } as React.CSSProperties} />
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--modus-wc-color-danger, #da212c)', marginBottom: 3, fontFamily: 'Open Sans, sans-serif' }}>
+                {fileErrors.length} error{fileErrors.length !== 1 ? 's' : ''} found in your file
+              </div>
+              <div style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content)', lineHeight: 1.55 }}>
+                Review the errors below, update your CSV, and re-upload to proceed.
+              </div>
+            </div>
+          </div>
+
+          {/* Error details accordion — separate card */}
+          <div style={{ borderRadius: 10, overflow: 'hidden', border: '1px solid var(--modus-wc-color-base-200)' }}>
             <button
               onClick={() => setErrorsExpanded(v => !v)}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', background: 'color-mix(in srgb, var(--modus-wc-color-danger, #da212c) 4%, transparent)', border: 'none', cursor: 'pointer', fontFamily: 'Open Sans, sans-serif', gap: 8 }}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', background: 'var(--modus-wc-color-base-page)', border: 'none', cursor: 'pointer', fontFamily: 'Open Sans, sans-serif', gap: 8 }}
             >
-              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <ModusWcIcon name="list_alt" size="xs" decorative style={{ color: 'var(--modus-wc-color-danger, #da212c)' } as React.CSSProperties} />
-                <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--modus-wc-color-danger, #da212c)' }}>
-                  {errorsExpanded ? 'Hide' : 'View'} {fileErrors.length} error detail{fileErrors.length !== 1 ? 's' : ''}
-                </span>
+              <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--modus-wc-color-base-content)' }}>
+                Error details
               </span>
               <ModusWcIcon name={errorsExpanded ? 'expand_less' : 'expand_more'} size="xs" decorative style={{ color: 'var(--modus-wc-color-base-content-low-contrast)' } as React.CSSProperties} />
             </button>
-
             {errorsExpanded && (
-              <div style={{ borderTop: '1px solid color-mix(in srgb, var(--modus-wc-color-danger, #da212c) 20%, transparent)' }}>
+              <div style={{ borderTop: '1px solid var(--modus-wc-color-base-200)' }}>
                 {fileErrors.map((err, i) => (
                   <div
                     key={i}
                     style={{ display: 'flex', alignItems: 'baseline', gap: 10, padding: '0.625rem 1rem', borderBottom: i < fileErrors.length - 1 ? '1px solid var(--modus-wc-color-base-200)' : 'none', background: 'var(--modus-wc-color-base-page)' }}
                   >
-                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--modus-wc-color-danger, #da212c)', whiteSpace: 'nowrap', minWidth: 42 }}>Row {err.row}</span>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--modus-wc-color-danger, #da212c)', whiteSpace: 'nowrap', minWidth: 46, fontFamily: 'Open Sans, sans-serif' }}>Row {err.row}</span>
                     <span style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>·</span>
-                    <span style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content)' }}>
+                    <span style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content)', fontFamily: 'Open Sans, sans-serif' }}>
                       <strong style={{ fontWeight: 600 }}>{err.field}</strong> — {err.issue}
                     </span>
                   </div>
@@ -584,15 +623,30 @@ function UploadScreen({
         </div>
       ) : (
         /* ── Success state ───────────────────────────────────────────── */
-        <div style={{ border: '2px solid var(--modus-wc-color-success, #006638)', borderRadius: 10, padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: 14, background: 'color-mix(in srgb, var(--modus-wc-color-success, #006638) 5%, transparent)' }}>
-          <ModusWcIcon name="check_circle" size="md" decorative style={{ color: 'var(--modus-wc-color-success, #006638)', flexShrink: 0 } as React.CSSProperties} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--modus-wc-color-base-content)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fileName}</div>
-            <div style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>File ready — click Continue to review</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {/* Neutral file chip */}
+          <div style={{ border: '1.5px solid var(--modus-wc-color-base-200)', borderRadius: 10, padding: '0.875rem 1.25rem', display: 'flex', alignItems: 'center', gap: 12, background: 'var(--modus-wc-color-base-page)' }}>
+            <ModusWcIcon name="description" size="md" decorative style={{ color: 'var(--modus-wc-color-base-content-low-contrast)', flexShrink: 0 } as React.CSSProperties} />
+            <span style={{ flex: 1, fontWeight: 600, fontSize: '0.9375rem', color: 'var(--modus-wc-color-base-content)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'Open Sans, sans-serif' }}>
+              {fileName}
+            </span>
+            <button onClick={() => onFileChange(null)} aria-label="Remove file" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, borderRadius: 4, color: 'var(--modus-wc-color-base-content-low-contrast)', display: 'flex', flexShrink: 0 }}>
+              <ModusWcIcon name="close" size="xs" decorative />
+            </button>
           </div>
-          <button onClick={() => onFileChange(null)} aria-label="Remove file" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, borderRadius: 4, color: 'var(--modus-wc-color-base-content-low-contrast)', display: 'flex' }}>
-            <ModusWcIcon name="close" size="xs" decorative />
-          </button>
+
+          {/* Success notification */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '0.875rem 1rem', borderRadius: 10, border: '1.5px solid color-mix(in srgb, var(--modus-wc-color-success, #006638) 40%, transparent)', background: 'color-mix(in srgb, var(--modus-wc-color-success, #006638) 5%, transparent)' }}>
+            <ModusWcIcon name="check_circle" size="sm" decorative style={{ color: 'var(--modus-wc-color-success, #006638)', flexShrink: 0, marginTop: 1 } as React.CSSProperties} />
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '0.9375rem', color: 'var(--modus-wc-color-success, #006638)', marginBottom: 3, fontFamily: 'Open Sans, sans-serif' }}>
+                File looks good
+              </div>
+              <div style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content)', lineHeight: 1.55 }}>
+                No errors detected. Click Continue to review your data.
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -613,69 +667,175 @@ function UploadScreen({
 
 // ─── Review screen ────────────────────────────────────────────────────────────
 
-function ReviewScreen({ step }: { step: ImportStepDef }) {
-  const PREVIEW_LIMIT = 10
-  const preview       = step.reviewRows.slice(0, PREVIEW_LIMIT)
-  const total         = step.simulatedTotal
-  const colCount      = step.reviewColumns.length
-
-  // First column = primary label, last right-aligned column = amount (if any)
-  const primaryCol    = step.reviewColumns[0]
-  const secondaryCol  = step.reviewColumns[1]
-  const amountCol     = step.reviewColumns.find(c => c.align === 'right')
+function ReviewScreen({
+  step,
+  balanceResolution,
+  onSetResolution,
+}: {
+  step: ImportStepDef
+  balanceResolution?: BalanceResolution
+  onSetResolution?: (r: BalanceResolution) => void
+}) {
+  const [showJournal, setShowJournal] = React.useState(false)
+  const isTB = step.id === 'trial-balance'
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: 560 }}>
 
-      {/* Stat bar */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        {[
-          { icon: 'table_rows',   text: `${total} records` },
-          { icon: 'view_column',  text: `${colCount} columns` },
-          { icon: 'check_circle', text: 'No errors', color: 'var(--modus-wc-color-success, #006638)' },
-        ].map(({ icon, text, color }, i) => (
-          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0.375rem 0.75rem', borderRadius: 99, border: '1px solid var(--modus-wc-color-base-200)', background: 'var(--modus-wc-color-base-100)' }}>
-            <ModusWcIcon name={icon} size="xs" decorative style={{ color: color ?? 'var(--modus-wc-color-base-content-low-contrast)' } as React.CSSProperties} />
-            <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: color ?? 'var(--modus-wc-color-base-content)', fontFamily: 'Open Sans, sans-serif' }}>{text}</span>
+      {/* Success confirmation card */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '1.25rem', borderRadius: 10, border: '1.5px solid color-mix(in srgb, var(--modus-wc-color-success, #006638) 40%, transparent)', background: 'color-mix(in srgb, var(--modus-wc-color-success, #006638) 5%, transparent)' }}>
+        <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'var(--modus-wc-color-success, #006638)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <ModusWcIcon name="check" size="sm" decorative style={{ color: '#fff' } as React.CSSProperties} />
+        </div>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--modus-wc-color-base-content)', marginBottom: 2, fontFamily: 'Open Sans, sans-serif' }}>
+            {step.simulatedTotal} records ready to import
           </div>
-        ))}
+          <div style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)', lineHeight: 1.5 }}>
+            Validation passed · No errors found
+          </div>
+        </div>
       </div>
 
-      {/* Preview list */}
+      {/* Breakdown stats */}
       <div style={{ border: '1px solid var(--modus-wc-color-base-200)', borderRadius: 10, overflow: 'hidden' }}>
         <div style={{ padding: '0.625rem 1rem', background: 'var(--modus-wc-color-base-100)', borderBottom: '1px solid var(--modus-wc-color-base-200)' }}>
           <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--modus-wc-color-base-content-low-contrast)', textTransform: 'uppercase', letterSpacing: '0.04em', fontFamily: 'Open Sans, sans-serif' }}>
-            Preview — first {Math.min(PREVIEW_LIMIT, total)} entries
+            Breakdown
           </span>
         </div>
-        {preview.map((row, i) => (
+        {step.summaryStats.map((stat, i) => (
           <div
             key={i}
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '0.75rem 1rem', borderBottom: i < preview.length - 1 ? '1px solid var(--modus-wc-color-base-200)' : 'none', background: i % 2 === 1 ? 'var(--modus-wc-color-base-100)' : 'var(--modus-wc-color-base-page)' }}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.625rem 1rem', borderBottom: i < step.summaryStats.length - 1 ? '1px solid var(--modus-wc-color-base-200)' : 'none', background: 'var(--modus-wc-color-base-page)' }}
           >
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--modus-wc-color-base-content)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'Open Sans, sans-serif' }}>
-                {row[primaryCol.key] ?? '—'}
-              </div>
-              {secondaryCol && secondaryCol.key !== amountCol?.key && (
-                <div style={{ fontSize: '0.8rem', color: 'var(--modus-wc-color-base-content-low-contrast)', marginTop: 1, fontFamily: 'Open Sans, sans-serif' }}>
-                  {row[secondaryCol.key] ?? '—'}
-                </div>
-              )}
-            </div>
-            {amountCol && (
-              <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--modus-wc-color-base-content)', fontFamily: 'Open Sans, sans-serif', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
-                {row[amountCol.key] ?? '—'}
-              </span>
-            )}
+            <span style={{ fontSize: '0.875rem', color: 'var(--modus-wc-color-base-content-low-contrast)', fontFamily: 'Open Sans, sans-serif' }}>{stat.label}</span>
+            <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--modus-wc-color-base-content)', fontFamily: 'Open Sans, sans-serif', fontVariantNumeric: 'tabular-nums' }}>{stat.value}</span>
           </div>
         ))}
       </div>
 
-      {/* Footer */}
-      <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)', lineHeight: 1.55 }}>
-        Showing {Math.min(PREVIEW_LIMIT, total)} of {total} records. All records will be imported on the final confirmation screen.
-      </p>
+      {/* Trial Balance — balance check */}
+      {isTB && balanceResolution === 'auto-balance' && (
+        <div style={{ border: '1.5px solid color-mix(in srgb, var(--modus-wc-color-success, #006638) 40%, transparent)', borderRadius: 10, padding: '1rem', display: 'flex', alignItems: 'center', gap: 12, background: 'color-mix(in srgb, var(--modus-wc-color-success, #006638) 5%, transparent)' }}>
+          <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--modus-wc-color-success, #006638)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <ModusWcIcon name="check" size="xs" decorative style={{ color: '#fff' } as React.CSSProperties} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--modus-wc-color-base-content)', marginBottom: 2 }}>Auto-balance accepted</div>
+            <div style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)', lineHeight: 1.5 }}>
+              A journal entry of <strong>{fmt(TB_DIFF)}</strong> to Retained Earnings will be created on import.
+            </div>
+          </div>
+          <button onClick={() => onSetResolution?.(null)} style={{ background: 'none', border: 'none', padding: '3px 8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, color: 'var(--modus-wc-color-base-content-low-contrast)', fontFamily: 'Open Sans, sans-serif', borderRadius: 4, whiteSpace: 'nowrap' }}>
+            Change
+          </button>
+        </div>
+      )}
+
+      {isTB && balanceResolution === 'proceed-anyway' && (
+        <div style={{ border: '1.5px solid color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 50%, transparent)', borderRadius: 10, padding: '1rem', display: 'flex', alignItems: 'center', gap: 12, background: 'color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 6%, transparent)' }}>
+          <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 30%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <ModusWcIcon name="warning" size="xs" decorative style={{ color: '#7a5200' } as React.CSSProperties} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 600, fontSize: '0.875rem', color: '#7a5200', marginBottom: 2 }}>Proceeding with imbalance</div>
+            <div style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)', lineHeight: 1.5 }}>
+              Books will be out of balance by <strong>{fmt(TB_DIFF)}</strong>. You can fix this later in Settings.
+            </div>
+          </div>
+          <button onClick={() => onSetResolution?.(null)} style={{ background: 'none', border: 'none', padding: '3px 8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, color: 'var(--modus-wc-color-base-content-low-contrast)', fontFamily: 'Open Sans, sans-serif', borderRadius: 4, whiteSpace: 'nowrap' }}>
+            Change
+          </button>
+        </div>
+      )}
+
+      {isTB && !balanceResolution && (
+        <div style={{ border: '1.5px solid color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 50%, transparent)', borderRadius: 10, overflow: 'hidden', background: 'color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 5%, transparent)' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '1rem', borderBottom: '1px solid color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 30%, transparent)' }}>
+            <ModusWcIcon name="warning" size="sm" decorative style={{ color: '#7a5200', flexShrink: 0, marginTop: 1 } as React.CSSProperties} />
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '0.9375rem', color: '#7a5200', marginBottom: 3 }}>Trial balance discrepancy</div>
+              <div style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content)', lineHeight: 1.5 }}>
+                Your debits and credits don't balance. Choose an option below to continue.
+              </div>
+            </div>
+          </div>
+
+          <div style={{ background: 'var(--modus-wc-color-base-page)' }}>
+            {[
+              { label: 'Total Debits',  value: fmt(TB_DEBIT_TOTAL),  highlight: false },
+              { label: 'Total Credits', value: fmt(TB_CREDIT_TOTAL), highlight: false },
+              { label: 'Difference',    value: fmt(TB_DIFF),         highlight: true  },
+            ].map(({ label, value, highlight }, i) => (
+              <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5625rem 1rem', borderBottom: i < 2 ? '1px solid var(--modus-wc-color-base-200)' : 'none', background: highlight ? 'color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 8%, transparent)' : 'transparent' }}>
+                <span style={{ fontSize: '0.875rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>{label}</span>
+                <span style={{ fontSize: '0.875rem', fontWeight: 700, color: highlight ? '#7a5200' : 'var(--modus-wc-color-base-content)' }}>{value}</span>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ borderTop: '1px solid color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 30%, transparent)' }}>
+            <button
+              onClick={() => setShowJournal((v) => !v)}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'Open Sans, sans-serif', gap: 8 }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <ModusWcIcon name="auto_fix_high" size="xs" decorative style={{ color: 'var(--modus-wc-color-primary)' } as React.CSSProperties} />
+                <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--modus-wc-color-primary)' }}>View auto-balance adjustment</span>
+              </span>
+              <ModusWcIcon name={showJournal ? 'expand_less' : 'expand_more'} size="xs" decorative style={{ color: 'var(--modus-wc-color-base-content-low-contrast)' } as React.CSSProperties} />
+            </button>
+            {showJournal && (
+              <div style={{ borderTop: '1px solid var(--modus-wc-color-base-200)', background: 'var(--modus-wc-color-base-page)', padding: '0 0 0.75rem' }}>
+                <div style={{ padding: '0.625rem 1rem 0.375rem', fontSize: '0.75rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>
+                  Trimble will create the following journal entry to balance your books:
+                </div>
+                <table className="data-table" style={{ width: '100%' }}>
+                  <thead>
+                    <tr style={{ background: 'var(--modus-wc-color-base-100)' }}>
+                      {['Date', 'Account', 'Description', 'Debit', 'Credit'].map((h) => (
+                        <th key={h} style={{ textAlign: h === 'Debit' || h === 'Credit' ? 'right' : 'left' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Jul 14, 2026</td>
+                      <td>Retained Earnings</td>
+                      <td>Opening balance adjustment</td>
+                      <td className="amount">—</td>
+                      <td className="amount">{fmt(TB_DIFF)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          <div style={{ padding: '0.875rem 1rem', borderTop: '1px solid color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 30%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12 }}>
+            <button
+              onClick={() => onSetResolution?.('proceed-anyway')}
+              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--modus-wc-color-base-content-low-contrast)', fontFamily: 'Open Sans, sans-serif', textDecoration: 'underline', textUnderlineOffset: 2 }}
+            >
+              Proceed with imbalance
+            </button>
+            <button
+              onClick={() => onSetResolution?.('auto-balance')}
+              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.5rem 1.25rem', borderRadius: 99, border: 'none', background: 'var(--modus-wc-color-primary)', color: '#fff', fontFamily: 'Open Sans, sans-serif', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer' }}
+            >
+              <ModusWcIcon name="auto_fix_high" size="xs" decorative />
+              Apply auto-balance
+            </button>
+          </div>
+        </div>
+      )}
+
+      {!isTB && (
+        <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)', lineHeight: 1.55 }}>
+          Click <strong style={{ color: 'var(--modus-wc-color-base-content)' }}>Next</strong> to continue. Your data will be committed on the final Import All screen.
+        </p>
+      )}
     </div>
   )
 }
@@ -685,13 +845,10 @@ function ReviewScreen({ step }: { step: ImportStepDef }) {
 function SummaryScreen({
   balanceResolution,
   skippedSteps,
-  onSetResolution,
 }: {
   balanceResolution: BalanceResolution
   skippedSteps: StepId[]
-  onSetResolution: (r: BalanceResolution) => void
 }) {
-  const [showJournal, setShowJournal] = useState(false)
   const totalRecords = STEPS.reduce((sum, s) => skippedSteps.includes(s.id) ? sum : sum + s.reviewRows.length, 0)
 
   return (
@@ -738,130 +895,8 @@ function SummaryScreen({
         </div>
       </div>
 
-      {/* Balance check — resolved states */}
-      {balanceResolution === 'auto-balance' ? (
-        <div style={{ border: '1.5px solid color-mix(in srgb, var(--modus-wc-color-success, #006638) 40%, transparent)', borderRadius: 10, padding: '1rem', display: 'flex', alignItems: 'center', gap: 12, background: 'color-mix(in srgb, var(--modus-wc-color-success, #006638) 5%, transparent)' }}>
-          <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--modus-wc-color-success, #006638)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <ModusWcIcon name="check" size="xs" decorative style={{ color: '#fff' } as React.CSSProperties} />
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--modus-wc-color-base-content)', marginBottom: 2 }}>Auto-balance accepted</div>
-            <div style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)', lineHeight: 1.5 }}>
-              A journal entry of <strong>{fmt(TB_DIFF)}</strong> to Retained Earnings will be created on import.
-            </div>
-          </div>
-          <button onClick={() => onSetResolution(null)} style={{ background: 'none', border: 'none', padding: '3px 8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, color: 'var(--modus-wc-color-base-content-low-contrast)', fontFamily: 'Open Sans, sans-serif', borderRadius: 4, whiteSpace: 'nowrap' }}>
-            Change
-          </button>
-        </div>
-      ) : balanceResolution === 'proceed-anyway' ? (
-        <div style={{ border: '1.5px solid color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 50%, transparent)', borderRadius: 10, padding: '1rem', display: 'flex', alignItems: 'center', gap: 12, background: 'color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 6%, transparent)' }}>
-          <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 30%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-            <ModusWcIcon name="warning" size="xs" decorative style={{ color: '#7a5200' } as React.CSSProperties} />
-          </div>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 600, fontSize: '0.875rem', color: '#7a5200', marginBottom: 2 }}>Proceeding with imbalance</div>
-            <div style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)', lineHeight: 1.5 }}>
-              Books will be out of balance by <strong>{fmt(TB_DIFF)}</strong>. You can fix this later in Settings.
-            </div>
-          </div>
-          <button onClick={() => onSetResolution(null)} style={{ background: 'none', border: 'none', padding: '3px 8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, color: 'var(--modus-wc-color-base-content-low-contrast)', fontFamily: 'Open Sans, sans-serif', borderRadius: 4, whiteSpace: 'nowrap' }}>
-            Change
-          </button>
-        </div>
-      ) : (
-        /* Balance check — inline warning */
-        <div style={{ border: '1.5px solid color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 50%, transparent)', borderRadius: 10, overflow: 'hidden', background: 'color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 5%, transparent)' }}>
-          {/* Header */}
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '1rem', borderBottom: '1px solid color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 30%, transparent)' }}>
-            <ModusWcIcon name="warning" size="sm" decorative style={{ color: '#7a5200', flexShrink: 0, marginTop: 1 } as React.CSSProperties} />
-            <div>
-              <div style={{ fontWeight: 700, fontSize: '0.9375rem', color: '#7a5200', marginBottom: 3 }}>Trial balance discrepancy</div>
-              <div style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content)', lineHeight: 1.5 }}>
-                Your debits and credits don't balance. Choose an option below before importing.
-              </div>
-            </div>
-          </div>
-
-          {/* Debit / credit summary */}
-          <div style={{ background: 'var(--modus-wc-color-base-page)' }}>
-            {[
-              { label: 'Total Debits',  value: fmt(TB_DEBIT_TOTAL),  highlight: false },
-              { label: 'Total Credits', value: fmt(TB_CREDIT_TOTAL), highlight: false },
-              { label: 'Difference',    value: fmt(TB_DIFF),         highlight: true  },
-            ].map(({ label, value, highlight }, i) => (
-              <div key={label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.5625rem 1rem', borderBottom: i < 2 ? '1px solid var(--modus-wc-color-base-200)' : 'none', background: highlight ? 'color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 8%, transparent)' : 'transparent' }}>
-                <span style={{ fontSize: '0.875rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>{label}</span>
-                <span style={{ fontSize: '0.875rem', fontWeight: 700, color: highlight ? '#7a5200' : 'var(--modus-wc-color-base-content)' }}>{value}</span>
-              </div>
-            ))}
-          </div>
-
-          {/* Auto-balance expander */}
-          <div style={{ borderTop: '1px solid color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 30%, transparent)' }}>
-            <button
-              onClick={() => setShowJournal((v) => !v)}
-              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', background: 'transparent', border: 'none', cursor: 'pointer', fontFamily: 'Open Sans, sans-serif', gap: 8 }}
-            >
-              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <ModusWcIcon name="auto_fix_high" size="xs" decorative style={{ color: 'var(--modus-wc-color-primary)' } as React.CSSProperties} />
-                <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--modus-wc-color-primary)' }}>View auto-balance adjustment</span>
-              </span>
-              <ModusWcIcon name={showJournal ? 'expand_less' : 'expand_more'} size="xs" decorative style={{ color: 'var(--modus-wc-color-base-content-low-contrast)' } as React.CSSProperties} />
-            </button>
-            {showJournal && (
-              <div style={{ borderTop: '1px solid var(--modus-wc-color-base-200)', background: 'var(--modus-wc-color-base-page)', padding: '0 0 0.75rem' }}>
-                <div style={{ padding: '0.625rem 1rem 0.375rem', fontSize: '0.75rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>
-                  Trimble will create the following journal entry to balance your books:
-                </div>
-                <table className="data-table" style={{ width: '100%' }}>
-                  <thead>
-                    <tr style={{ background: 'var(--modus-wc-color-base-100)' }}>
-                      {['Date', 'Account', 'Description', 'Debit', 'Credit'].map((h) => (
-                        <th key={h} style={{ textAlign: h === 'Debit' || h === 'Credit' ? 'right' : 'left' }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>Jul 14, 2026</td>
-                      <td>Retained Earnings</td>
-                      <td>Opening balance adjustment</td>
-                      <td className="amount">—</td>
-                      <td className="amount">{fmt(TB_DIFF)}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-
-          {/* Actions */}
-          <div style={{ padding: '0.875rem 1rem', borderTop: '1px solid color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 30%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12 }}>
-            <button
-              onClick={() => onSetResolution('proceed-anyway')}
-              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--modus-wc-color-base-content-low-contrast)', fontFamily: 'Open Sans, sans-serif', textDecoration: 'underline', textUnderlineOffset: 2 }}
-            >
-              Proceed with imbalance
-            </button>
-            <button
-              onClick={() => onSetResolution('auto-balance')}
-              style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.5rem 1.25rem', borderRadius: 99, border: 'none', background: 'var(--modus-wc-color-primary)', color: '#fff', fontFamily: 'Open Sans, sans-serif', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer' }}
-            >
-              <ModusWcIcon name="auto_fix_high" size="xs" decorative />
-              Apply auto-balance
-            </button>
-          </div>
-        </div>
-      )}
-
       <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)', lineHeight: 1.55 }}>
-        {balanceResolution === 'auto-balance'
-          ? <>Clicking <strong style={{ color: 'var(--modus-wc-color-base-content)' }}>Import All</strong> will add all records and apply the auto-balance journal entry. This action can be undone within 24 hours from Settings.</>
-          : balanceResolution === 'proceed-anyway'
-          ? <>Clicking <strong style={{ color: 'var(--modus-wc-color-base-content)' }}>Import All</strong> will proceed with an imbalance of {fmt(TB_DIFF)}. You can correct this later in Settings.</>
-          : <>Resolve the trial balance discrepancy above to enable <strong style={{ color: 'var(--modus-wc-color-base-content)' }}>Import All</strong>.</>
-        }
+        Everything looks good. Click <strong style={{ color: 'var(--modus-wc-color-base-content)' }}>Import All</strong> to commit your data to Trimble Financials. This action can be undone within 24 hours from Settings.
       </p>
     </div>
   )
@@ -1056,7 +1091,12 @@ export default function ImportWizardV2() {
 
   const handleFileChange = (name: string | null) => {
     setFileName(name)
-    setFileErrors(name === 'errors.csv' ? MOCK_FILE_ERRORS : [])
+    setFileErrors([])
+  }
+
+  const handleUploadWithErrors = () => {
+    setFileName(`${step.id}.csv`)
+    setFileErrors(MOCK_FILE_ERRORS)
   }
 
   const handleSkip = () => {
@@ -1144,7 +1184,7 @@ export default function ImportWizardV2() {
                     : subPhase === 'review'  ? (stepIndex < STEPS.length - 1 ? 'Next' : 'Review summary')
                     : 'Import All'
   const ctaDisabled = (subPhase === 'upload' && (!fileName || fileErrors.length > 0))
-                   || (subPhase === 'summary' && balanceResolution === null)
+                   || (subPhase === 'review' && step.id === 'trial-balance' && balanceResolution === null)
 
   return (
     <>
@@ -1180,7 +1220,7 @@ export default function ImportWizardV2() {
             <div style={{ fontSize: '0.875rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>
               {subPhase === 'intro'   ? '5 steps · takes about 10 minutes'
                : subPhase === 'upload'  ? 'Upload your file'
-               : subPhase === 'review'  ? 'Review your data'
+               : subPhase === 'review'  ? (step.id === 'trial-balance' ? 'Review & resolve balance' : 'Review your data')
                : 'Final review before import'}
             </div>
           </div>
@@ -1198,14 +1238,17 @@ export default function ImportWizardV2() {
           {subPhase === 'intro' ? (
             <IntroScreen />
           ) : subPhase === 'upload' ? (
-            <UploadScreen step={step} fileName={fileName} fileErrors={fileErrors} skippable={SKIPPABLE_STEPS.includes(step.id)} onFileChange={handleFileChange} onSkipRequest={() => setSkipModalStep(step.id)} />
+            <UploadScreen step={step} fileName={fileName} fileErrors={fileErrors} skippable={SKIPPABLE_STEPS.includes(step.id)} onFileChange={handleFileChange} onUploadWithErrors={handleUploadWithErrors} onSkipRequest={() => setSkipModalStep(step.id)} />
           ) : subPhase === 'review' ? (
-            <ReviewScreen step={step} />
+            <ReviewScreen
+              step={step}
+              balanceResolution={balanceResolution}
+              onSetResolution={setBalanceResolution}
+            />
           ) : (
             <SummaryScreen
               balanceResolution={balanceResolution}
               skippedSteps={skippedSteps}
-              onSetResolution={setBalanceResolution}
             />
           )}
         </div>
