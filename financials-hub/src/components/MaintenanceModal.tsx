@@ -1,5 +1,3 @@
-import React from "react"
-import { ModusWcIcon } from "@trimble-oss/moduswebcomponents-react"
 
 export const MAINTENANCE_DATE = "Thursday, July 24, 2026"
 export const MAINTENANCE_TIME = "11:00 PM – 3:00 AM ET"
