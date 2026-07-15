@@ -5,7 +5,18 @@ import { ModusWcIcon } from '@trimble-oss/moduswebcomponents-react'
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type StepId = 'bank-accounts' | 'customers' | 'jobs' | 'vendors' | 'trial-balance'
+
+const SKIPPABLE_STEPS: StepId[] = ['customers', 'jobs', 'vendors']
 type SubPhase = 'intro' | 'upload' | 'review' | 'summary'
+type BalanceResolution = null | 'auto-balance' | 'proceed-anyway'
+
+interface FileError { row: number; field: string; issue: string }
+
+const MOCK_FILE_ERRORS: FileError[] = [
+  { row: 4,  field: 'Account Number',  issue: 'Missing required value' },
+  { row: 9,  field: 'Opening Balance', issue: 'Must be a number' },
+  { row: 14, field: 'Account Type',    issue: 'Unrecognized value "chekcing"' },
+]
 
 interface ReviewColumn { key: string; label: string; align?: 'right' }
 interface ReviewRow    { [key: string]: string }
@@ -137,10 +148,12 @@ function saveProgress(steps: StepId[]) {
 function StepPopover({
   currentIndex,
   completedSteps,
+  skippedSteps,
   onClose,
 }: {
   currentIndex: number
   completedSteps: StepId[]
+  skippedSteps: StepId[]
   onClose: () => void
 }) {
   const ref = useRef<HTMLDivElement>(null)
@@ -171,9 +184,10 @@ function StepPopover({
       }}
     >
       {STEPS.map((step, i) => {
-        const done    = completedSteps.includes(step.id)
-        const current = i === currentIndex && !done
-        const upcoming = !done && !current
+        const done     = completedSteps.includes(step.id)
+        const skipped  = skippedSteps.includes(step.id)
+        const current  = i === currentIndex && !done && !skipped
+        const upcoming = !done && !skipped && !current
 
         return (
           <div
@@ -194,6 +208,8 @@ function StepPopover({
               borderRadius: '50%',
               background: done
                 ? 'var(--modus-wc-color-success, #006638)'
+                : skipped
+                ? 'var(--modus-wc-color-base-200)'
                 : current
                 ? 'var(--modus-wc-color-primary)'
                 : 'var(--modus-wc-color-base-200)',
@@ -204,6 +220,8 @@ function StepPopover({
             }}>
               {done ? (
                 <ModusWcIcon name="check" size="xs" decorative style={{ color: '#fff' } as React.CSSProperties} />
+              ) : skipped ? (
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, fontFamily: 'Open Sans, sans-serif', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>—</span>
               ) : (
                 <span style={{ fontSize: '0.6875rem', fontWeight: 700, fontFamily: 'Open Sans, sans-serif', color: current ? '#fff' : 'var(--modus-wc-color-base-content-low-contrast)' }}>
                   {i + 1}
@@ -229,11 +247,13 @@ function StepPopover({
               fontFamily: 'Open Sans, sans-serif',
               color: done
                 ? 'var(--modus-wc-color-success, #006638)'
+                : skipped
+                ? 'var(--modus-wc-color-base-content-low-contrast)'
                 : current
                 ? 'var(--modus-wc-color-primary)'
                 : 'var(--modus-wc-color-base-content-low-contrast)',
             }}>
-              {done ? 'Completed' : current ? 'Current' : 'Upcoming'}
+              {done ? 'Completed' : skipped ? 'Skipped' : current ? 'Current' : 'Upcoming'}
             </span>
           </div>
         )
@@ -302,6 +322,7 @@ function IntroScreen() {
 function BottomNav({
   stepIndex,
   completedSteps,
+  skippedSteps,
   ctaLabel,
   ctaDisabled,
   onBack,
@@ -310,6 +331,7 @@ function BottomNav({
 }: {
   stepIndex: number
   completedSteps: StepId[]
+  skippedSteps: StepId[]
   ctaLabel: string
   ctaDisabled?: boolean
   onBack: () => void
@@ -345,6 +367,7 @@ function BottomNav({
           <StepPopover
             currentIndex={stepIndex}
             completedSteps={completedSteps}
+            skippedSteps={skippedSteps}
             onClose={() => setShowPopover(false)}
           />
         )}
@@ -368,14 +391,23 @@ function BottomNav({
 function UploadScreen({
   step,
   fileName,
+  fileErrors,
+  skippable,
   onFileChange,
+  onSkip,
+  onSkipRequest,
 }: {
   step: ImportStepDef
   fileName: string | null
+  fileErrors: FileError[]
+  skippable: boolean
   onFileChange: (n: string | null) => void
+  onSkip: () => void
+  onSkipRequest: () => void
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
-  const [dragging, setDragging] = useState(false)
+  const [dragging,      setDragging]      = useState(false)
+  const [errorsExpanded, setErrorsExpanded] = useState(false)
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault(); setDragging(false)
@@ -442,15 +474,84 @@ function UploadScreen({
             <span style={{ fontSize: '0.75rem', color: 'var(--modus-wc-color-base-content-low-contrast)', fontFamily: 'Open Sans, sans-serif' }}>or</span>
             <div style={{ flex: 1, height: 1, background: 'var(--modus-wc-color-base-200)' }} />
           </div>
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <button
+              onClick={() => onFileChange(`sample-${step.id}.csv`)}
+              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '0.625rem 1rem', borderRadius: 8, border: '1.5px solid color-mix(in srgb, var(--modus-wc-color-primary) 40%, transparent)', background: 'color-mix(in srgb, var(--modus-wc-color-primary) 4%, transparent)', color: 'var(--modus-wc-color-primary)', fontFamily: 'Open Sans, sans-serif', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer' }}
+            >
+              <ModusWcIcon name="table_view" size="xs" decorative />
+              Use sample data
+            </button>
+            <button
+              onClick={() => onFileChange('errors.csv')}
+              style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '0.625rem 1rem', borderRadius: 8, border: '1.5px solid color-mix(in srgb, var(--modus-wc-color-danger, #da212c) 40%, transparent)', background: 'color-mix(in srgb, var(--modus-wc-color-danger, #da212c) 4%, transparent)', color: 'var(--modus-wc-color-danger, #da212c)', fontFamily: 'Open Sans, sans-serif', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer' }}
+            >
+              <ModusWcIcon name="error" size="xs" decorative />
+              Upload with errors
+            </button>
+          </div>
+        </div>
+      ) : fileErrors.length > 0 ? (
+        /* ── Error state ─────────────────────────────────────────────── */
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {/* File chip */}
+          <div style={{ border: '2px solid color-mix(in srgb, var(--modus-wc-color-danger, #da212c) 50%, transparent)', borderRadius: 10, padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: 14, background: 'color-mix(in srgb, var(--modus-wc-color-danger, #da212c) 4%, transparent)' }}>
+            <ModusWcIcon name="error" size="md" decorative style={{ color: 'var(--modus-wc-color-danger, #da212c)', flexShrink: 0 } as React.CSSProperties} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 600, fontSize: '0.9375rem', color: 'var(--modus-wc-color-base-content)', marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{fileName}</div>
+              <div style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-danger, #da212c)', fontWeight: 600 }}>
+                {fileErrors.length} error{fileErrors.length !== 1 ? 's' : ''} found — fix your CSV and re-upload
+              </div>
+            </div>
+            <button onClick={() => onFileChange(null)} aria-label="Remove file" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, borderRadius: 4, color: 'var(--modus-wc-color-base-content-low-contrast)', display: 'flex' }}>
+              <ModusWcIcon name="close" size="xs" decorative />
+            </button>
+          </div>
+
+          {/* Error accordion */}
+          <div style={{ border: '1px solid color-mix(in srgb, var(--modus-wc-color-danger, #da212c) 30%, transparent)', borderRadius: 10, overflow: 'hidden' }}>
+            <button
+              onClick={() => setErrorsExpanded(v => !v)}
+              style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', background: 'color-mix(in srgb, var(--modus-wc-color-danger, #da212c) 4%, transparent)', border: 'none', cursor: 'pointer', fontFamily: 'Open Sans, sans-serif', gap: 8 }}
+            >
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <ModusWcIcon name="list_alt" size="xs" decorative style={{ color: 'var(--modus-wc-color-danger, #da212c)' } as React.CSSProperties} />
+                <span style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--modus-wc-color-danger, #da212c)' }}>
+                  {errorsExpanded ? 'Hide' : 'View'} {fileErrors.length} error detail{fileErrors.length !== 1 ? 's' : ''}
+                </span>
+              </span>
+              <ModusWcIcon name={errorsExpanded ? 'expand_less' : 'expand_more'} size="xs" decorative style={{ color: 'var(--modus-wc-color-base-content-low-contrast)' } as React.CSSProperties} />
+            </button>
+
+            {errorsExpanded && (
+              <div style={{ borderTop: '1px solid color-mix(in srgb, var(--modus-wc-color-danger, #da212c) 20%, transparent)' }}>
+                {fileErrors.map((err, i) => (
+                  <div
+                    key={i}
+                    style={{ display: 'flex', alignItems: 'baseline', gap: 10, padding: '0.625rem 1rem', borderBottom: i < fileErrors.length - 1 ? '1px solid var(--modus-wc-color-base-200)' : 'none', background: 'var(--modus-wc-color-base-page)' }}
+                  >
+                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--modus-wc-color-danger, #da212c)', whiteSpace: 'nowrap', minWidth: 42 }}>Row {err.row}</span>
+                    <span style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>·</span>
+                    <span style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content)' }}>
+                      <strong style={{ fontWeight: 600 }}>{err.field}</strong> — {err.issue}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Demo shortcut */}
           <button
             onClick={() => onFileChange(`sample-${step.id}.csv`)}
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '0.625rem 1rem', borderRadius: 8, border: '1.5px solid color-mix(in srgb, var(--modus-wc-color-primary) 40%, transparent)', background: 'color-mix(in srgb, var(--modus-wc-color-primary) 4%, transparent)', color: 'var(--modus-wc-color-primary)', fontFamily: 'Open Sans, sans-serif', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer' }}
           >
-            <ModusWcIcon name="table_view" size="xs" decorative />
-            Use sample data
+            <ModusWcIcon name="check_circle" size="xs" decorative />
+            Fix errors and continue with sample data
           </button>
         </div>
       ) : (
+        /* ── Success state ───────────────────────────────────────────── */
         <div style={{ border: '2px solid var(--modus-wc-color-success, #006638)', borderRadius: 10, padding: '1rem 1.25rem', display: 'flex', alignItems: 'center', gap: 14, background: 'color-mix(in srgb, var(--modus-wc-color-success, #006638) 5%, transparent)' }}>
           <ModusWcIcon name="check_circle" size="md" decorative style={{ color: 'var(--modus-wc-color-success, #006638)', flexShrink: 0 } as React.CSSProperties} />
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -459,6 +560,18 @@ function UploadScreen({
           </div>
           <button onClick={() => onFileChange(null)} aria-label="Remove file" style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, borderRadius: 4, color: 'var(--modus-wc-color-base-content-low-contrast)', display: 'flex' }}>
             <ModusWcIcon name="close" size="xs" decorative />
+          </button>
+        </div>
+      )}
+
+      {/* Skip link — only for optional steps, only when no file is loaded */}
+      {skippable && !fileName && (
+        <div style={{ textAlign: 'center', paddingTop: '0.25rem' }}>
+          <button
+            onClick={step.id === 'customers' ? onSkipRequest : onSkip}
+            style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--modus-wc-color-base-content-low-contrast)', fontFamily: 'Open Sans, sans-serif', textDecoration: 'underline', textUnderlineOffset: 2 }}
+          >
+            I don't have {step.label.toLowerCase()} to import — skip this step
           </button>
         </div>
       )}
@@ -512,16 +625,16 @@ function ReviewScreen({ step }: { step: ImportStepDef }) {
 // ─── Summary screen ───────────────────────────────────────────────────────────
 
 function SummaryScreen({
-  onFixReupload,
-  autoBalanceAccepted,
-  onAutoBalanceAccept,
+  balanceResolution,
+  skippedSteps,
+  onSetResolution,
 }: {
-  onFixReupload: () => void
-  autoBalanceAccepted: boolean
-  onAutoBalanceAccept: () => void
+  balanceResolution: BalanceResolution
+  skippedSteps: StepId[]
+  onSetResolution: (r: BalanceResolution) => void
 }) {
   const [showJournal, setShowJournal] = useState(false)
-  const totalRecords = STEPS.reduce((sum, s) => sum + s.reviewRows.length, 0)
+  const totalRecords = STEPS.reduce((sum, s) => skippedSteps.includes(s.id) ? sum : sum + s.reviewRows.length, 0)
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: 640 }}>
@@ -530,36 +643,45 @@ function SummaryScreen({
           Review your import
         </h2>
         <p style={{ margin: 0, fontSize: '0.9375rem', color: 'var(--modus-wc-color-base-content-low-contrast)', lineHeight: 1.6 }}>
-          All 5 files are ready. Review the summary below then click Import All to commit your data.
+          {skippedSteps.length > 0
+            ? `${STEPS.length - skippedSteps.length} of 5 steps completed. Review the summary below then click Import All to commit your data.`
+            : 'All 5 files are ready. Review the summary below then click Import All to commit your data.'
+          }
         </p>
       </div>
 
       {/* Step summary table */}
       <div style={{ border: '1px solid var(--modus-wc-color-base-200)', borderRadius: 10, overflow: 'hidden' }}>
-        {STEPS.map((s, i) => (
-          <div
-            key={s.id}
-            style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '0.875rem 1rem', borderBottom: i < STEPS.length - 1 ? '1px solid var(--modus-wc-color-base-200)' : 'none', background: 'var(--modus-wc-color-base-page)' }}
-          >
-            <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'var(--modus-wc-color-success, #006638)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <ModusWcIcon name="check" size="xs" decorative style={{ color: '#fff' } as React.CSSProperties} />
+        {STEPS.map((s, i) => {
+          const isSkipped = skippedSteps.includes(s.id)
+          return (
+            <div
+              key={s.id}
+              style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '0.875rem 1rem', borderBottom: i < STEPS.length - 1 ? '1px solid var(--modus-wc-color-base-200)' : 'none', background: 'var(--modus-wc-color-base-page)' }}
+            >
+              <div style={{ width: 28, height: 28, borderRadius: '50%', background: isSkipped ? 'var(--modus-wc-color-base-200)' : 'var(--modus-wc-color-success, #006638)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                {isSkipped
+                  ? <span style={{ fontSize: '0.75rem', fontWeight: 700, fontFamily: 'Open Sans, sans-serif', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>—</span>
+                  : <ModusWcIcon name="check" size="xs" decorative style={{ color: '#fff' } as React.CSSProperties} />
+                }
+              </div>
+              <span style={{ flex: 1, fontWeight: 600, fontSize: '0.9375rem', color: isSkipped ? 'var(--modus-wc-color-base-content-low-contrast)' : 'var(--modus-wc-color-base-content)', fontFamily: 'Open Sans, sans-serif' }}>
+                {s.label}
+              </span>
+              <span style={{ fontSize: '0.8125rem', fontFamily: 'Open Sans, sans-serif', whiteSpace: 'nowrap', color: isSkipped ? 'var(--modus-wc-color-base-content-low-contrast)' : 'var(--modus-wc-color-base-content-low-contrast)', fontStyle: isSkipped ? 'italic' : 'normal' }}>
+                {isSkipped ? 'Skipped' : `${s.reviewRows.length} records`}
+              </span>
             </div>
-            <span style={{ flex: 1, fontWeight: 600, fontSize: '0.9375rem', color: 'var(--modus-wc-color-base-content)', fontFamily: 'Open Sans, sans-serif' }}>
-              {s.label}
-            </span>
-            <span style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)', fontFamily: 'Open Sans, sans-serif', whiteSpace: 'nowrap' }}>
-              {s.reviewRows.length} records
-            </span>
-          </div>
-        ))}
+          )
+        })}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 1rem', background: 'var(--modus-wc-color-base-100)', borderTop: '1px solid var(--modus-wc-color-base-200)' }}>
           <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--modus-wc-color-base-content)', fontFamily: 'Open Sans, sans-serif' }}>Total records</span>
           <span style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--modus-wc-color-base-content)', fontFamily: 'Open Sans, sans-serif' }}>{totalRecords}</span>
         </div>
       </div>
 
-      {/* Balance check — accepted state */}
-      {autoBalanceAccepted ? (
+      {/* Balance check — resolved states */}
+      {balanceResolution === 'auto-balance' ? (
         <div style={{ border: '1.5px solid color-mix(in srgb, var(--modus-wc-color-success, #006638) 40%, transparent)', borderRadius: 10, padding: '1rem', display: 'flex', alignItems: 'center', gap: 12, background: 'color-mix(in srgb, var(--modus-wc-color-success, #006638) 5%, transparent)' }}>
           <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--modus-wc-color-success, #006638)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <ModusWcIcon name="check" size="xs" decorative style={{ color: '#fff' } as React.CSSProperties} />
@@ -570,11 +692,23 @@ function SummaryScreen({
               A journal entry of <strong>{fmt(TB_DIFF)}</strong> to Retained Earnings will be created on import.
             </div>
           </div>
-          <button
-            onClick={onFixReupload}
-            style={{ background: 'none', border: 'none', padding: '3px 8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, color: 'var(--modus-wc-color-base-content-low-contrast)', fontFamily: 'Open Sans, sans-serif', borderRadius: 4, whiteSpace: 'nowrap' }}
-          >
-            Re-upload instead
+          <button onClick={() => onSetResolution(null)} style={{ background: 'none', border: 'none', padding: '3px 8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, color: 'var(--modus-wc-color-base-content-low-contrast)', fontFamily: 'Open Sans, sans-serif', borderRadius: 4, whiteSpace: 'nowrap' }}>
+            Change
+          </button>
+        </div>
+      ) : balanceResolution === 'proceed-anyway' ? (
+        <div style={{ border: '1.5px solid color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 50%, transparent)', borderRadius: 10, padding: '1rem', display: 'flex', alignItems: 'center', gap: 12, background: 'color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 6%, transparent)' }}>
+          <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 30%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <ModusWcIcon name="warning" size="xs" decorative style={{ color: '#7a5200' } as React.CSSProperties} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 600, fontSize: '0.875rem', color: '#7a5200', marginBottom: 2 }}>Proceeding with imbalance</div>
+            <div style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)', lineHeight: 1.5 }}>
+              Books will be out of balance by <strong>{fmt(TB_DIFF)}</strong>. You can fix this later in Settings.
+            </div>
+          </div>
+          <button onClick={() => onSetResolution(null)} style={{ background: 'none', border: 'none', padding: '3px 8px', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 600, color: 'var(--modus-wc-color-base-content-low-contrast)', fontFamily: 'Open Sans, sans-serif', borderRadius: 4, whiteSpace: 'nowrap' }}>
+            Change
           </button>
         </div>
       ) : (
@@ -647,13 +781,13 @@ function SummaryScreen({
           {/* Actions */}
           <div style={{ padding: '0.875rem 1rem', borderTop: '1px solid color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 30%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 12 }}>
             <button
-              onClick={onFixReupload}
-              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--modus-wc-color-base-content-low-contrast)', fontFamily: 'Open Sans, sans-serif', display: 'flex', alignItems: 'center', gap: 5 }}
+              onClick={() => onSetResolution('proceed-anyway')}
+              style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--modus-wc-color-base-content-low-contrast)', fontFamily: 'Open Sans, sans-serif', textDecoration: 'underline', textUnderlineOffset: 2 }}
             >
-              Fix and re-upload
+              Proceed with imbalance
             </button>
             <button
-              onClick={onAutoBalanceAccept}
+              onClick={() => onSetResolution('auto-balance')}
               style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.5rem 1.25rem', borderRadius: 99, border: 'none', background: 'var(--modus-wc-color-primary)', color: '#fff', fontFamily: 'Open Sans, sans-serif', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer' }}
             >
               <ModusWcIcon name="auto_fix_high" size="xs" decorative />
@@ -664,8 +798,10 @@ function SummaryScreen({
       )}
 
       <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)', lineHeight: 1.55 }}>
-        {autoBalanceAccepted
+        {balanceResolution === 'auto-balance'
           ? <>Clicking <strong style={{ color: 'var(--modus-wc-color-base-content)' }}>Import All</strong> will add all records and apply the auto-balance journal entry. This action can be undone within 24 hours from Settings.</>
+          : balanceResolution === 'proceed-anyway'
+          ? <>Clicking <strong style={{ color: 'var(--modus-wc-color-base-content)' }}>Import All</strong> will proceed with an imbalance of {fmt(TB_DIFF)}. You can correct this later in Settings.</>
           : <>Resolve the trial balance discrepancy above to enable <strong style={{ color: 'var(--modus-wc-color-base-content)' }}>Import All</strong>.</>
         }
       </p>
@@ -675,12 +811,61 @@ function SummaryScreen({
 
 // ─── Final confirm modal ──────────────────────────────────────────────────────
 
-function ConfirmAllModal({
-  autoBalanceAccepted,
+// ─── Skip customers + jobs modal ──────────────────────────────────────────────
+
+function SkipCascadeModal({
   onConfirm,
   onCancel,
 }: {
-  autoBalanceAccepted: boolean
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: '1rem' }}>
+      <div style={{ background: 'var(--modus-wc-color-base-page)', borderRadius: 14, maxWidth: 400, width: '100%', boxShadow: '0 8px 40px rgba(0,0,0,0.18)', overflow: 'hidden' }}>
+        {/* Header */}
+        <div style={{ padding: '1.25rem 1.5rem 0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '0.75rem' }}>
+            <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 15%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <ModusWcIcon name="warning" size="sm" decorative style={{ color: '#7a5200' } as React.CSSProperties} />
+            </div>
+            <h2 style={{ margin: 0, fontSize: '1.0625rem', fontWeight: 700, color: 'var(--modus-wc-color-base-content)', fontFamily: 'Open Sans, sans-serif' }}>
+              Skip Customers?
+            </h2>
+          </div>
+          <p style={{ margin: '0 0 1rem', fontSize: '0.9rem', color: 'var(--modus-wc-color-base-content-low-contrast)', lineHeight: 1.6 }}>
+            Since jobs are linked to customers, skipping this step will also skip <strong style={{ color: 'var(--modus-wc-color-base-content)' }}>Jobs</strong>. Both steps will be marked as skipped.
+          </p>
+        </div>
+
+        {/* Actions */}
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', padding: '0.75rem 1.5rem 1.25rem' }}>
+          <button
+            onClick={onCancel}
+            style={{ padding: '0.5rem 1.25rem', borderRadius: 99, border: '1.5px solid var(--modus-wc-color-base-200)', background: 'transparent', color: 'var(--modus-wc-color-base-content)', fontFamily: 'Open Sans, sans-serif', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer' }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            style={{ padding: '0.5rem 1.25rem', borderRadius: 99, border: 'none', background: 'var(--modus-wc-color-primary)', color: '#fff', fontFamily: 'Open Sans, sans-serif', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer' }}
+          >
+            Skip both steps
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Confirm all modal ────────────────────────────────────────────────────────
+
+function ConfirmAllModal({
+  balanceResolution,
+  onConfirm,
+  onCancel,
+}: {
+  balanceResolution: BalanceResolution
   onConfirm: () => void
   onCancel: () => void
 }) {
@@ -704,11 +889,19 @@ function ConfirmAllModal({
           ))}
         </div>
 
-        {autoBalanceAccepted && (
+        {balanceResolution === 'auto-balance' && (
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '0.75rem 1rem', borderRadius: 8, border: '1px solid color-mix(in srgb, var(--modus-wc-color-primary) 30%, transparent)', background: 'color-mix(in srgb, var(--modus-wc-color-primary) 5%, transparent)' }}>
             <ModusWcIcon name="auto_fix_high" size="xs" decorative style={{ color: 'var(--modus-wc-color-primary)', flexShrink: 0, marginTop: 2 } as React.CSSProperties} />
             <span style={{ fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content)', lineHeight: 1.5 }}>
               An auto-balance journal entry of <strong>{fmt(TB_DIFF)}</strong> to Retained Earnings will also be created.
+            </span>
+          </div>
+        )}
+        {balanceResolution === 'proceed-anyway' && (
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '0.75rem 1rem', borderRadius: 8, border: '1px solid color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 50%, transparent)', background: 'color-mix(in srgb, var(--modus-wc-color-warning, #fbad26) 6%, transparent)' }}>
+            <ModusWcIcon name="warning" size="xs" decorative style={{ color: '#7a5200', flexShrink: 0, marginTop: 2 } as React.CSSProperties} />
+            <span style={{ fontSize: '0.8125rem', color: '#7a5200', lineHeight: 1.5 }}>
+              Your books will be out of balance by <strong>{fmt(TB_DIFF)}</strong>. You can correct this later in Settings → Journal Entries.
             </span>
           </div>
         )}
@@ -752,13 +945,38 @@ function SuccessScreen({ onDone }: { onDone: () => void }) {
 export default function ImportWizardV2() {
   const navigate = useNavigate()
 
-  const [stepIndex,       setStepIndex]       = useState(0)
-  const [subPhase,        setSubPhase]         = useState<SubPhase>('intro')
-  const [fileName,        setFileName]         = useState<string | null>(null)
-  const [completedSteps,  setCompletedSteps]   = useState<StepId[]>(loadProgress)
-  const [showFinalConfirm,    setShowFinalConfirm]    = useState(false)
-  const [autoBalanceAccepted, setAutoBalanceAccepted] = useState(false)
-  const [done,                setDone]                = useState(false)
+  const [stepIndex,         setStepIndex]         = useState(0)
+  const [subPhase,          setSubPhase]           = useState<SubPhase>('intro')
+  const [fileName,          setFileName]           = useState<string | null>(null)
+  const [fileErrors,        setFileErrors]         = useState<FileError[]>([])
+  const [completedSteps,    setCompletedSteps]     = useState<StepId[]>(loadProgress)
+  const [skippedSteps,      setSkippedSteps]       = useState<StepId[]>([])
+  const [showSkipModal,     setShowSkipModal]       = useState(false)
+  const [showFinalConfirm,  setShowFinalConfirm]   = useState(false)
+  const [balanceResolution, setBalanceResolution]  = useState<BalanceResolution>(null)
+  const [done,              setDone]               = useState(false)
+
+  const handleFileChange = (name: string | null) => {
+    setFileName(name)
+    setFileErrors(name === 'errors.csv' ? MOCK_FILE_ERRORS : [])
+  }
+
+  const handleSkip = () => {
+    const toSkip: StepId[] = [step.id]
+    // Cascade: skipping Customers also silently skips Jobs
+    if (step.id === 'customers') toSkip.push('jobs')
+    setSkippedSteps(prev => [...prev, ...toSkip])
+    setFileName(null)
+    setFileErrors([])
+    // Jump ahead by the number of cascaded skips
+    const nextIndex = stepIndex + toSkip.length
+    if (nextIndex < STEPS.length) {
+      setStepIndex(nextIndex)
+      setSubPhase('upload')
+    } else {
+      setSubPhase('summary')
+    }
+  }
 
   const step = STEPS[stepIndex]
 
@@ -773,6 +991,7 @@ export default function ImportWizardV2() {
       setStepIndex(stepIndex + 1)
       setSubPhase('upload')
       setFileName(null)
+      setFileErrors([])
     } else {
       setSubPhase('summary')
     }
@@ -786,6 +1005,8 @@ export default function ImportWizardV2() {
       setSubPhase('review')
     } else if (subPhase === 'review') {
       setSubPhase('upload')
+      setFileName(null)
+      setFileErrors([])
     } else if (stepIndex > 0) {
       setStepIndex(stepIndex - 1)
       setSubPhase('review')
@@ -807,13 +1028,6 @@ export default function ImportWizardV2() {
     }
   }
 
-  const handleFixReupload = () => {
-    const tbIndex = STEPS.findIndex((s) => s.id === 'trial-balance')
-    setStepIndex(tbIndex)
-    setSubPhase('upload')
-    setFileName(null)
-    setAutoBalanceAccepted(false)
-  }
 
   if (done) {
     return (
@@ -831,14 +1045,21 @@ export default function ImportWizardV2() {
                     : subPhase === 'upload'  ? 'Continue'
                     : subPhase === 'review'  ? (stepIndex < STEPS.length - 1 ? 'Next' : 'Review summary')
                     : 'Import All'
-  const ctaDisabled = (subPhase === 'upload' && !fileName)
-                   || (subPhase === 'summary' && !autoBalanceAccepted)
+  const ctaDisabled = (subPhase === 'upload' && (!fileName || fileErrors.length > 0))
+                   || (subPhase === 'summary' && balanceResolution === null)
 
   return (
     <>
+      {showSkipModal && (
+        <SkipCascadeModal
+          onConfirm={() => { setShowSkipModal(false); handleSkip() }}
+          onCancel={() => setShowSkipModal(false)}
+        />
+      )}
+
       {showFinalConfirm && (
         <ConfirmAllModal
-          autoBalanceAccepted={autoBalanceAccepted}
+          balanceResolution={balanceResolution}
           onConfirm={() => { setShowFinalConfirm(false); setDone(true) }}
           onCancel={() => setShowFinalConfirm(false)}
         />
@@ -872,14 +1093,14 @@ export default function ImportWizardV2() {
           {subPhase === 'intro' ? (
             <IntroScreen />
           ) : subPhase === 'upload' ? (
-            <UploadScreen step={step} fileName={fileName} onFileChange={setFileName} />
+            <UploadScreen step={step} fileName={fileName} fileErrors={fileErrors} skippable={SKIPPABLE_STEPS.includes(step.id)} onFileChange={handleFileChange} onSkip={handleSkip} onSkipRequest={() => setShowSkipModal(true)} />
           ) : subPhase === 'review' ? (
             <ReviewScreen step={step} />
           ) : (
             <SummaryScreen
-              onFixReupload={handleFixReupload}
-              autoBalanceAccepted={autoBalanceAccepted}
-              onAutoBalanceAccept={() => setAutoBalanceAccepted(true)}
+              balanceResolution={balanceResolution}
+              skippedSteps={skippedSteps}
+              onSetResolution={setBalanceResolution}
             />
           )}
         </div>
@@ -888,6 +1109,7 @@ export default function ImportWizardV2() {
         <BottomNav
           stepIndex={stepIndex}
           completedSteps={completedSteps}
+          skippedSteps={skippedSteps}
           ctaLabel={ctaLabel}
           ctaDisabled={ctaDisabled}
           onBack={handleBack}

@@ -4,6 +4,7 @@ import { ModusWcIcon, ModusWcDropdownMenu, ModusWcMenuItem } from '@trimble-oss/
 import { AddButton } from '../components/AddButton'
 import { usePeriodsContext } from '../context/PeriodsContext'
 import { getPendingClosePeriods } from '../data/periods'
+import { MaintenanceModal } from '../components/MaintenanceModal'
 
 function MeatballMenu() {
   return (
@@ -884,14 +885,41 @@ function ImportBanner() {
   )
 }
 
-export default function DashboardHub() {
+const MAINTENANCE_STORAGE_KEY = 'maintenance-notice-2026-07-24-dismissed'
+
+export default function DashboardHub({ onShowBanner }: { onShowBanner?: () => void }) {
   const onboardingPath = localStorage.getItem('onboarding-path')
   if (onboardingPath === 'manual') {
     return <GettingStartedDashboard />
   }
 
+  const [maintenanceOpen, setMaintenanceOpen] = React.useState(
+    () => localStorage.getItem(MAINTENANCE_STORAGE_KEY) !== 'true'
+  )
+
+  const handleMaintenanceDismiss = () => {
+    localStorage.setItem(MAINTENANCE_STORAGE_KEY, 'true')
+    setMaintenanceOpen(false)
+  }
+
+  const demoButtonStyle = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 5,
+    background: 'none',
+    border: '1px solid var(--modus-wc-color-base-200)',
+    borderRadius: 6,
+    padding: '4px 10px',
+    cursor: 'pointer',
+    fontFamily: 'Open Sans, sans-serif',
+    fontSize: '0.72rem',
+    color: 'var(--modus-wc-color-base-content-low-contrast)',
+  } as const
+
   return (
     <div className="hub-page">
+      <MaintenanceModal open={maintenanceOpen} onDismiss={handleMaintenanceDismiss} />
+
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16 }}>
         <div>
@@ -903,7 +931,27 @@ export default function DashboardHub() {
             Welcome back, Alex Johnson
           </span>
         </div>
-        <AddButton />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button
+            onClick={() => setMaintenanceOpen(true)}
+            title="Preview maintenance modal"
+            style={demoButtonStyle}
+          >
+            <ModusWcIcon name="build" size="xs" decorative />
+            Modal
+          </button>
+          {onShowBanner && (
+            <button
+              onClick={onShowBanner}
+              title="Preview maintenance banner"
+              style={demoButtonStyle}
+            >
+              <ModusWcIcon name="notifications" size="xs" decorative />
+              Banner
+            </button>
+          )}
+          <AddButton />
+        </div>
       </div>
 
       {/* Import banner — dismissible */}

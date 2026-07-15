@@ -960,15 +960,16 @@ export default function JobDetail({ job }: { job: HubJob }) {
         {/* Action menu — top right */}
         <div ref={menuRef} style={{ position: 'absolute', top: 12, right: 12 }}>
           <ModusWcButton
-            aria-label="Job actions"
+            aria-label="Add"
             aria-expanded={menuOpen}
-            variant="outlined"
+            variant="filled"
             color="primary"
             size="sm"
+            shape="ellipse"
             onButtonClick={() => setMenuOpen((o) => !o)}
           >
-            Actions
-            <ModusWcIcon name="expand_more" size="sm" decorative />
+            <ModusWcIcon name="add" size="sm" decorative />
+            Add
           </ModusWcButton>
           {menuOpen && (
             <div

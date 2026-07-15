@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import React from 'react'
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import {
   ModusWcThemeProvider,
@@ -23,6 +24,7 @@ import ImportWizard from './pages/ImportWizard'
 import ImportWizardV2 from './pages/ImportWizardV2'
 import OnboardingSetup from './pages/OnboardingSetup'
 import { PeriodsProvider } from './context/PeriodsContext'
+import { MaintenanceBanner, BANNER_STORAGE_KEY } from './components/MaintenanceBanner'
 
 const SIDENAV_MAX_WIDTH = '256px'
 const NAVBAR_HEIGHT = 56
@@ -42,6 +44,9 @@ export default function App() {
   const navigate = useNavigate()
   const location = useLocation()
   const [sideNavExpanded, setSideNavExpanded] = useState(false)
+  const [bannerOpen, setBannerOpen] = React.useState(
+    () => localStorage.getItem(BANNER_STORAGE_KEY) !== 'true'
+  )
 
 
   const handleExpandedChange = (e: Event) => {
@@ -123,9 +128,17 @@ export default function App() {
 
           {/* Main scrollable area */}
           <main id="main-content">
+            {/* Maintenance banner — sits above all page content */}
+            <MaintenanceBanner
+              open={bannerOpen}
+              onDismiss={() => {
+                localStorage.setItem(BANNER_STORAGE_KEY, 'true')
+                setBannerOpen(false)
+              }}
+            />
             <PeriodsProvider>
               <Routes>
-                <Route path="/" element={<DashboardHub />} />
+                <Route path="/" element={<DashboardHub onShowBanner={() => { localStorage.removeItem(BANNER_STORAGE_KEY); setBannerOpen(true) }} />} />
                 <Route path="/jobs" element={<JobHub />} />
                 <Route path="/jobs/new" element={<NewJobPage />} />
                 <Route path="/billing" element={<BillingHub />} />
