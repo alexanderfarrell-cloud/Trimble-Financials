@@ -843,10 +843,8 @@ function ReviewScreen({
 // ─── Summary screen ───────────────────────────────────────────────────────────
 
 function SummaryScreen({
-  balanceResolution,
   skippedSteps,
 }: {
-  balanceResolution: BalanceResolution
   skippedSteps: StepId[]
 }) {
   const totalRecords = STEPS.reduce((sum, s) => skippedSteps.includes(s.id) ? sum : sum + s.reviewRows.length, 0)
@@ -1247,7 +1245,6 @@ export default function ImportWizardV2() {
             />
           ) : (
             <SummaryScreen
-              balanceResolution={balanceResolution}
               skippedSteps={skippedSteps}
             />
           )}
