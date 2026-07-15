@@ -26,6 +26,7 @@ interface ImportStepDef {
   label: string
   icon: string
   description: string
+  simulatedTotal: number
   reviewColumns: ReviewColumn[]
   reviewRows: ReviewRow[]
 }
@@ -38,6 +39,7 @@ const STEPS: ImportStepDef[] = [
     label: 'Bank and Credit Accounts',
     icon: 'account_balance',
     description: 'Import your bank and credit card accounts with opening balances.',
+    simulatedTotal: 12,
     reviewColumns: [
       { key: 'name',    label: 'Account Name' },
       { key: 'type',    label: 'Type' },
@@ -45,10 +47,16 @@ const STEPS: ImportStepDef[] = [
       { key: 'balance', label: 'Opening Balance', align: 'right' },
     ],
     reviewRows: [
-      { name: 'Business Checking',   type: 'Bank',   number: '••••4821', balance: '$12,450.00'  },
-      { name: 'Business Savings',    type: 'Bank',   number: '••••3309', balance: '$8,200.00'   },
-      { name: 'Mastercard Business', type: 'Credit', number: '••••7714', balance: '-$3,400.00'  },
-      { name: 'Line of Credit',      type: 'Credit', number: '••••1102', balance: '-$6,000.00'  },
+      { name: 'Business Checking',      type: 'Bank',   number: '••••4821', balance: '$12,450.00' },
+      { name: 'Business Savings',       type: 'Bank',   number: '••••3309', balance: '$8,200.00'  },
+      { name: 'Mastercard Business',    type: 'Credit', number: '••••7714', balance: '-$3,400.00' },
+      { name: 'Line of Credit',         type: 'Credit', number: '••••1102', balance: '-$6,000.00' },
+      { name: 'Payroll Checking',       type: 'Bank',   number: '••••9201', balance: '$4,100.00'  },
+      { name: 'Money Market',           type: 'Bank',   number: '••••5543', balance: '$21,000.00' },
+      { name: 'Visa Platinum',          type: 'Credit', number: '••••0032', balance: '-$1,200.00' },
+      { name: 'Equipment Loan Reserve', type: 'Bank',   number: '••••6614', balance: '$3,500.00'  },
+      { name: 'HSA Account',            type: 'Bank',   number: '••••8877', balance: '$900.00'    },
+      { name: 'Petty Cash',             type: 'Bank',   number: 'N/A',      balance: '$250.00'    },
     ],
   },
   {
@@ -56,6 +64,7 @@ const STEPS: ImportStepDef[] = [
     label: 'Customers',
     icon: 'contacts',
     description: 'Import your customer list with contact information.',
+    simulatedTotal: 84,
     reviewColumns: [
       { key: 'id',      label: 'Customer ID' },
       { key: 'company', label: 'Company' },
@@ -64,10 +73,16 @@ const STEPS: ImportStepDef[] = [
       { key: 'balance', label: 'Open Balance', align: 'right' },
     ],
     reviewRows: [
-      { id: 'DD111', company: 'Downtown Dev LLC',      contact: 'Dana Dawson', email: 'dana@dddev.com',       balance: '$4,800.00'  },
-      { id: 'MR202', company: 'Meridian Group',        contact: 'Ray Ortega',  email: 'ray@meridian.com',     balance: '$12,250.00' },
-      { id: 'SS303', company: 'Summit Structures',     contact: 'Sam Sloane',  email: 'ssloane@summit.com',   balance: '$0.00'      },
-      { id: 'HC404', company: 'Harbor Creek Partners', contact: 'Lena Park',   email: 'lena@harborcreek.com', balance: '$7,500.00'  },
+      { id: 'DD111', company: 'Downtown Dev LLC',       contact: 'Dana Dawson',    email: 'dana@dddev.com',        balance: '$4,800.00'  },
+      { id: 'MR202', company: 'Meridian Group',         contact: 'Ray Ortega',     email: 'ray@meridian.com',      balance: '$12,250.00' },
+      { id: 'SS303', company: 'Summit Structures',      contact: 'Sam Sloane',     email: 'ssloane@summit.com',    balance: '$0.00'      },
+      { id: 'HC404', company: 'Harbor Creek Partners',  contact: 'Lena Park',      email: 'lena@harborcreek.com',  balance: '$7,500.00'  },
+      { id: 'BT505', company: 'Bayside Technologies',   contact: 'Chris Malone',   email: 'chris@bayside.tech',    balance: '$3,100.00'  },
+      { id: 'RA606', company: 'Ridgeway Architecture',  contact: 'Priya Nair',     email: 'priya@ridgeway.com',    balance: '$9,900.00'  },
+      { id: 'CF707', company: 'Clearfield Fabrication', contact: 'Tom Barker',     email: 'tom@clearfield.com',    balance: '$0.00'      },
+      { id: 'NB808', company: 'Northbridge Builders',   contact: 'Sarah Okafor',   email: 's.okafor@nbridge.com',  balance: '$18,400.00' },
+      { id: 'MP909', company: 'Metro Planning Group',   contact: 'Alex Reyes',     email: 'areyes@metroplan.com',  balance: '$6,750.00'  },
+      { id: 'WC010', company: 'Westcoast Contracting',  contact: 'Jamie Liu',      email: 'jliu@westcoast.co',     balance: '$2,200.00'  },
     ],
   },
   {
@@ -75,6 +90,7 @@ const STEPS: ImportStepDef[] = [
     label: 'Jobs',
     icon: 'assignment',
     description: 'Import existing jobs with contract values and dates.',
+    simulatedTotal: 47,
     reviewColumns: [
       { key: 'name',     label: 'Job Name' },
       { key: 'customer', label: 'Customer' },
@@ -83,10 +99,16 @@ const STEPS: ImportStepDef[] = [
       { key: 'status',   label: 'Status' },
     ],
     reviewRows: [
-      { name: 'Downtown Tower — Phase 2', customer: 'Meridian Group',        value: '$4,200,000', start: 'Jan 8, 2024',  status: 'Active'  },
-      { name: 'Harbor Walk Renovation',   customer: 'Harbor Creek Partners', value: '$890,000',   start: 'Mar 1, 2025',  status: 'Active'  },
-      { name: 'North Campus Landscaping', customer: 'Downtown Dev LLC',      value: '$320,000',   start: 'Jun 15, 2025', status: 'Pending' },
-      { name: 'Summit Office Build-Out',  customer: 'Summit Structures',     value: '$1,150,000', start: 'Sep 1, 2025',  status: 'Active'  },
+      { name: 'Downtown Tower — Phase 2',  customer: 'Meridian Group',        value: '$4,200,000', start: 'Jan 8, 2024',  status: 'Active'    },
+      { name: 'Harbor Walk Renovation',    customer: 'Harbor Creek Partners', value: '$890,000',   start: 'Mar 1, 2025',  status: 'Active'    },
+      { name: 'North Campus Landscaping',  customer: 'Downtown Dev LLC',      value: '$320,000',   start: 'Jun 15, 2025', status: 'Pending'   },
+      { name: 'Summit Office Build-Out',   customer: 'Summit Structures',     value: '$1,150,000', start: 'Sep 1, 2025',  status: 'Active'    },
+      { name: 'Bayside Server Room',       customer: 'Bayside Technologies',  value: '$210,000',   start: 'Oct 12, 2025', status: 'Active'    },
+      { name: 'Ridgeway Mixed-Use Dev',    customer: 'Ridgeway Architecture', value: '$3,800,000', start: 'Feb 2, 2025',  status: 'Active'    },
+      { name: 'Metro Rail Station Fit-Out',customer: 'Metro Planning Group',  value: '$750,000',   start: 'Apr 18, 2025', status: 'On Hold'   },
+      { name: 'Northbridge Townhomes',     customer: 'Northbridge Builders',  value: '$5,600,000', start: 'Jul 1, 2024',  status: 'Active'    },
+      { name: 'Clearfield Expansion',      customer: 'Clearfield Fabrication',value: '$480,000',   start: 'Nov 5, 2025',  status: 'Pending'   },
+      { name: 'Westcoast Warehouse Ext.',  customer: 'Westcoast Contracting', value: '$290,000',   start: 'Dec 1, 2025',  status: 'Pending'   },
     ],
   },
   {
@@ -94,6 +116,7 @@ const STEPS: ImportStepDef[] = [
     label: 'Vendors',
     icon: 'business',
     description: 'Import vendors and outstanding payable balances.',
+    simulatedTotal: 38,
     reviewColumns: [
       { key: 'id',      label: 'Vendor ID' },
       { key: 'company', label: 'Company' },
@@ -102,10 +125,16 @@ const STEPS: ImportStepDef[] = [
       { key: 'balance', label: 'Open Balance', align: 'right' },
     ],
     reviewRows: [
-      { id: 'V001', company: 'Pacific Supply Co',  contact: 'Pat Williams', terms: 'Net 30', balance: '$3,200.00' },
-      { id: 'V002', company: 'Iron Works Inc',     contact: 'Irene Kovacs', terms: 'Net 45', balance: '$1,800.00' },
-      { id: 'V003', company: 'ProBuild Materials', contact: 'Marco Bell',   terms: 'Net 15', balance: '$5,400.00' },
-      { id: 'V004', company: 'Cascade Electrical', contact: 'Dina Watts',   terms: 'Net 30', balance: '$0.00'     },
+      { id: 'V001', company: 'Pacific Supply Co',    contact: 'Pat Williams',  terms: 'Net 30', balance: '$3,200.00' },
+      { id: 'V002', company: 'Iron Works Inc',       contact: 'Irene Kovacs',  terms: 'Net 45', balance: '$1,800.00' },
+      { id: 'V003', company: 'ProBuild Materials',   contact: 'Marco Bell',    terms: 'Net 15', balance: '$5,400.00' },
+      { id: 'V004', company: 'Cascade Electrical',   contact: 'Dina Watts',    terms: 'Net 30', balance: '$0.00'     },
+      { id: 'V005', company: 'Summit Plumbing Co',   contact: 'Karl Jensen',   terms: 'Net 30', balance: '$2,100.00' },
+      { id: 'V006', company: 'Apex Concrete',        contact: 'Rosa Delgado',  terms: 'Net 60', balance: '$7,800.00' },
+      { id: 'V007', company: 'Blue Ridge Lumber',    contact: 'Stan Ford',     terms: 'Net 30', balance: '$4,500.00' },
+      { id: 'V008', company: 'Allied Roofing',       contact: 'Gina Tran',     terms: 'Net 45', balance: '$0.00'     },
+      { id: 'V009', company: 'Greenfield HVAC',      contact: 'Omar Hassan',   terms: 'Net 30', balance: '$3,900.00' },
+      { id: 'V010', company: 'National Tool Rental', contact: 'Beth Carver',   terms: 'Net 15', balance: '$1,100.00' },
     ],
   },
   {
@@ -113,6 +142,7 @@ const STEPS: ImportStepDef[] = [
     label: 'Trial Balance',
     icon: 'balance',
     description: 'Import your chart of accounts with opening debit and credit balances.',
+    simulatedTotal: 42,
     reviewColumns: [
       { key: 'account',  label: 'Account' },
       { key: 'category', label: 'Category' },
@@ -120,12 +150,16 @@ const STEPS: ImportStepDef[] = [
       { key: 'credit',   label: 'Credit', align: 'right' },
     ],
     reviewRows: [
-      { account: 'Business Checking',   category: 'Asset',     debit: '$12,450.00', credit: '—'          },
-      { account: 'Business Savings',    category: 'Asset',     debit: '$8,200.00',  credit: '—'          },
-      { account: 'Accounts Receivable', category: 'Asset',     debit: '$24,550.00', credit: '—'          },
-      { account: 'Accounts Payable',    category: 'Liability', debit: '—',          credit: '$10,400.00' },
-      { account: 'Loan Payable',        category: 'Liability', debit: '—',          credit: '$32,705.00' },
-      { account: 'Retained Earnings',   category: 'Equity',    debit: '—',          credit: '$1,000.00'  },
+      { account: 'Business Checking',     category: 'Asset',     debit: '$12,450.00', credit: '—'          },
+      { account: 'Business Savings',      category: 'Asset',     debit: '$8,200.00',  credit: '—'          },
+      { account: 'Accounts Receivable',   category: 'Asset',     debit: '$24,550.00', credit: '—'          },
+      { account: 'Inventory',             category: 'Asset',     debit: '$6,300.00',  credit: '—'          },
+      { account: 'Prepaid Insurance',     category: 'Asset',     debit: '$1,200.00',  credit: '—'          },
+      { account: 'Equipment',             category: 'Asset',     debit: '$48,000.00', credit: '—'          },
+      { account: 'Accounts Payable',      category: 'Liability', debit: '—',          credit: '$10,400.00' },
+      { account: 'Loan Payable',          category: 'Liability', debit: '—',          credit: '$32,705.00' },
+      { account: 'Retained Earnings',     category: 'Equity',    debit: '—',          credit: '$1,000.00'  },
+      { account: 'Revenue',               category: 'Revenue',   debit: '—',          credit: '$55,900.00' },
     ],
   },
 ]
@@ -568,7 +602,7 @@ function UploadScreen({
       {skippable && !fileName && (
         <div style={{ textAlign: 'center', paddingTop: '0.25rem' }}>
           <button
-            onClick={step.id === 'customers' ? onSkipRequest : onSkip}
+            onClick={onSkipRequest}
             style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '0.8125rem', fontWeight: 600, color: 'var(--modus-wc-color-base-content-low-contrast)', fontFamily: 'Open Sans, sans-serif', textDecoration: 'underline', textUnderlineOffset: 2 }}
           >
             I don't have {step.label.toLowerCase()} to import — skip this step
@@ -582,41 +616,67 @@ function UploadScreen({
 // ─── Review screen ────────────────────────────────────────────────────────────
 
 function ReviewScreen({ step }: { step: ImportStepDef }) {
-  const count = step.reviewRows.length
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-      <p style={{ margin: 0, fontSize: '0.9375rem', color: 'var(--modus-wc-color-base-content)' }}>
-        <strong>{count} {count === 1 ? 'record' : 'records'} detected.</strong>{' '}
-        <span style={{ color: 'var(--modus-wc-color-base-content-low-contrast)' }}>
-          Please review them below and then click Next to continue.
-        </span>
-      </p>
+  const PREVIEW_LIMIT = 10
+  const preview       = step.reviewRows.slice(0, PREVIEW_LIMIT)
+  const total         = step.simulatedTotal
+  const colCount      = step.reviewColumns.length
 
-      <div style={{ border: '1px solid var(--modus-wc-color-base-200)', borderRadius: 8, overflow: 'auto' }}>
-        <table className="data-table" style={{ minWidth: '100%' }}>
-          <thead>
-            <tr style={{ background: 'var(--modus-wc-color-base-100)' }}>
-              {step.reviewColumns.map((col) => (
-                <th key={col.key} style={{ textAlign: col.align === 'right' ? 'right' : 'left' }}>{col.label}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {step.reviewRows.map((row, ri) => (
-              <tr key={ri} style={{ background: ri % 2 === 1 ? 'var(--modus-wc-color-base-100)' : 'var(--modus-wc-color-base-page)' }}>
-                {step.reviewColumns.map((col) => (
-                  <td key={col.key} className={col.align === 'right' ? 'amount' : ''}>
-                    {row[col.key] ?? '—'}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+  // First column = primary label, last right-aligned column = amount (if any)
+  const primaryCol    = step.reviewColumns[0]
+  const secondaryCol  = step.reviewColumns[1]
+  const amountCol     = step.reviewColumns.find(c => c.align === 'right')
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: 560 }}>
+
+      {/* Stat bar */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        {[
+          { icon: 'table_rows',   text: `${total} records` },
+          { icon: 'view_column',  text: `${colCount} columns` },
+          { icon: 'check_circle', text: 'No errors', color: 'var(--modus-wc-color-success, #006638)' },
+        ].map(({ icon, text, color }, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0.375rem 0.75rem', borderRadius: 99, border: '1px solid var(--modus-wc-color-base-200)', background: 'var(--modus-wc-color-base-100)' }}>
+            <ModusWcIcon name={icon} size="xs" decorative style={{ color: color ?? 'var(--modus-wc-color-base-content-low-contrast)' } as React.CSSProperties} />
+            <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: color ?? 'var(--modus-wc-color-base-content)', fontFamily: 'Open Sans, sans-serif' }}>{text}</span>
+          </div>
+        ))}
       </div>
 
-      <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)' }}>
-        Your data will be reviewed and confirmed on the final summary screen before anything is imported.
+      {/* Preview list */}
+      <div style={{ border: '1px solid var(--modus-wc-color-base-200)', borderRadius: 10, overflow: 'hidden' }}>
+        <div style={{ padding: '0.625rem 1rem', background: 'var(--modus-wc-color-base-100)', borderBottom: '1px solid var(--modus-wc-color-base-200)' }}>
+          <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--modus-wc-color-base-content-low-contrast)', textTransform: 'uppercase', letterSpacing: '0.04em', fontFamily: 'Open Sans, sans-serif' }}>
+            Preview — first {Math.min(PREVIEW_LIMIT, total)} entries
+          </span>
+        </div>
+        {preview.map((row, i) => (
+          <div
+            key={i}
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '0.75rem 1rem', borderBottom: i < preview.length - 1 ? '1px solid var(--modus-wc-color-base-200)' : 'none', background: i % 2 === 1 ? 'var(--modus-wc-color-base-100)' : 'var(--modus-wc-color-base-page)' }}
+          >
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontWeight: 600, fontSize: '0.9rem', color: 'var(--modus-wc-color-base-content)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'Open Sans, sans-serif' }}>
+                {row[primaryCol.key] ?? '—'}
+              </div>
+              {secondaryCol && secondaryCol.key !== amountCol?.key && (
+                <div style={{ fontSize: '0.8rem', color: 'var(--modus-wc-color-base-content-low-contrast)', marginTop: 1, fontFamily: 'Open Sans, sans-serif' }}>
+                  {row[secondaryCol.key] ?? '—'}
+                </div>
+              )}
+            </div>
+            {amountCol && (
+              <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--modus-wc-color-base-content)', fontFamily: 'Open Sans, sans-serif', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
+                {row[amountCol.key] ?? '—'}
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Footer */}
+      <p style={{ margin: 0, fontSize: '0.8125rem', color: 'var(--modus-wc-color-base-content-low-contrast)', lineHeight: 1.55 }}>
+        Showing {Math.min(PREVIEW_LIMIT, total)} of {total} records. All records will be imported on the final confirmation screen.
       </p>
     </div>
   )
@@ -811,6 +871,46 @@ function SummaryScreen({
 
 // ─── Final confirm modal ──────────────────────────────────────────────────────
 
+// ─── Skip step modals ─────────────────────────────────────────────────────────
+
+function SkipStepModal({
+  stepLabel,
+  onConfirm,
+  onCancel,
+}: {
+  stepLabel: string
+  onConfirm: () => void
+  onCancel: () => void
+}) {
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: '1rem' }}>
+      <div style={{ background: 'var(--modus-wc-color-base-page)', borderRadius: 14, maxWidth: 400, width: '100%', boxShadow: '0 8px 40px rgba(0,0,0,0.18)', overflow: 'hidden' }}>
+        <div style={{ padding: '1.25rem 1.5rem 0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '0.75rem' }}>
+            <div style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--modus-wc-color-base-100)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <ModusWcIcon name="help" size="sm" decorative style={{ color: 'var(--modus-wc-color-base-content-low-contrast)' } as React.CSSProperties} />
+            </div>
+            <h2 style={{ margin: 0, fontSize: '1.0625rem', fontWeight: 700, color: 'var(--modus-wc-color-base-content)', fontFamily: 'Open Sans, sans-serif' }}>
+              Skip {stepLabel}?
+            </h2>
+          </div>
+          <p style={{ margin: '0 0 1rem', fontSize: '0.9rem', color: 'var(--modus-wc-color-base-content-low-contrast)', lineHeight: 1.6 }}>
+            You won't be able to import {stepLabel.toLowerCase()} as part of this setup. You can add them manually later from the <strong style={{ color: 'var(--modus-wc-color-base-content)' }}>{stepLabel}</strong> section.
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', padding: '0.75rem 1.5rem 1.25rem' }}>
+          <button onClick={onCancel} style={{ padding: '0.5rem 1.25rem', borderRadius: 99, border: '1.5px solid var(--modus-wc-color-base-200)', background: 'transparent', color: 'var(--modus-wc-color-base-content)', fontFamily: 'Open Sans, sans-serif', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer' }}>
+            Cancel
+          </button>
+          <button onClick={onConfirm} style={{ padding: '0.5rem 1.25rem', borderRadius: 99, border: 'none', background: 'var(--modus-wc-color-primary)', color: '#fff', fontFamily: 'Open Sans, sans-serif', fontSize: '0.875rem', fontWeight: 700, cursor: 'pointer' }}>
+            Skip this step
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Skip customers + jobs modal ──────────────────────────────────────────────
 
 function SkipCascadeModal({
@@ -951,7 +1051,7 @@ export default function ImportWizardV2() {
   const [fileErrors,        setFileErrors]         = useState<FileError[]>([])
   const [completedSteps,    setCompletedSteps]     = useState<StepId[]>(loadProgress)
   const [skippedSteps,      setSkippedSteps]       = useState<StepId[]>([])
-  const [showSkipModal,     setShowSkipModal]       = useState(false)
+  const [skipModalStep,     setSkipModalStep]       = useState<StepId | null>(null)
   const [showFinalConfirm,  setShowFinalConfirm]   = useState(false)
   const [balanceResolution, setBalanceResolution]  = useState<BalanceResolution>(null)
   const [done,              setDone]               = useState(false)
@@ -1050,10 +1150,17 @@ export default function ImportWizardV2() {
 
   return (
     <>
-      {showSkipModal && (
+      {skipModalStep === 'customers' && (
         <SkipCascadeModal
-          onConfirm={() => { setShowSkipModal(false); handleSkip() }}
-          onCancel={() => setShowSkipModal(false)}
+          onConfirm={() => { setSkipModalStep(null); handleSkip() }}
+          onCancel={() => setSkipModalStep(null)}
+        />
+      )}
+      {skipModalStep && skipModalStep !== 'customers' && (
+        <SkipStepModal
+          stepLabel={STEPS.find(s => s.id === skipModalStep)?.label ?? skipModalStep}
+          onConfirm={() => { setSkipModalStep(null); handleSkip() }}
+          onCancel={() => setSkipModalStep(null)}
         />
       )}
 
@@ -1093,7 +1200,7 @@ export default function ImportWizardV2() {
           {subPhase === 'intro' ? (
             <IntroScreen />
           ) : subPhase === 'upload' ? (
-            <UploadScreen step={step} fileName={fileName} fileErrors={fileErrors} skippable={SKIPPABLE_STEPS.includes(step.id)} onFileChange={handleFileChange} onSkip={handleSkip} onSkipRequest={() => setShowSkipModal(true)} />
+            <UploadScreen step={step} fileName={fileName} fileErrors={fileErrors} skippable={SKIPPABLE_STEPS.includes(step.id)} onFileChange={handleFileChange} onSkip={handleSkip} onSkipRequest={() => setSkipModalStep(step.id)} />
           ) : subPhase === 'review' ? (
             <ReviewScreen step={step} />
           ) : (
