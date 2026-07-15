@@ -428,7 +428,6 @@ function UploadScreen({
   fileErrors,
   skippable,
   onFileChange,
-  onSkip,
   onSkipRequest,
 }: {
   step: ImportStepDef
@@ -436,7 +435,6 @@ function UploadScreen({
   fileErrors: FileError[]
   skippable: boolean
   onFileChange: (n: string | null) => void
-  onSkip: () => void
   onSkipRequest: () => void
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
@@ -1200,7 +1198,7 @@ export default function ImportWizardV2() {
           {subPhase === 'intro' ? (
             <IntroScreen />
           ) : subPhase === 'upload' ? (
-            <UploadScreen step={step} fileName={fileName} fileErrors={fileErrors} skippable={SKIPPABLE_STEPS.includes(step.id)} onFileChange={handleFileChange} onSkip={handleSkip} onSkipRequest={() => setSkipModalStep(step.id)} />
+            <UploadScreen step={step} fileName={fileName} fileErrors={fileErrors} skippable={SKIPPABLE_STEPS.includes(step.id)} onFileChange={handleFileChange} onSkipRequest={() => setSkipModalStep(step.id)} />
           ) : subPhase === 'review' ? (
             <ReviewScreen step={step} />
           ) : (
