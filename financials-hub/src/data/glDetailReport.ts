@@ -164,6 +164,18 @@ export function formatCurrency(amount: number | null): string {
   }).format(amount)
 }
 
+/** ISO date (YYYY-MM-DD) → display label matching ModusWcDate format */
+export function formatDisplayDate(iso: string): string {
+  if (!iso) return ''
+  const [year, month, day] = iso.split('-').map(Number)
+  const date = new Date(year, month - 1, day)
+  return new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  }).format(date)
+}
+
 export function accountLabel(account: GlAccount): string {
   return `${account.code} ${account.name}`
 }

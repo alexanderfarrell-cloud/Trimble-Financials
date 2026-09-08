@@ -22,19 +22,20 @@ import {
   DEFAULT_START_DATE,
   filterReportRows,
   formatCurrency,
+  formatDisplayDate,
   GL_ACCOUNTS,
   rowsToTableData,
 } from '../data/glDetailReport'
 
 const TABLE_COLUMNS = [
-  { id: 'sourceModule', header: 'Source module', accessor: 'sourceModule' },
-  { id: 'glAccount', header: 'GL account', accessor: 'glAccount' },
-  { id: 'jeNumber', header: 'JE #', accessor: 'jeNumber', width: '80px' },
-  { id: 'debit', header: 'Debit', accessor: 'debit' },
-  { id: 'credit', header: 'Credit', accessor: 'credit' },
-  { id: 'sourceRef', header: 'Source ref #', accessor: 'sourceRef' },
-  { id: 'date', header: 'Date', accessor: 'date' },
-  { id: 'postedBy', header: 'Posted by', accessor: 'postedBy' },
+  { id: 'sourceModule', header: 'Source module', accessor: 'sourceModule', sortable: true },
+  { id: 'glAccount', header: 'GL account', accessor: 'glAccount', sortable: true },
+  { id: 'jeNumber', header: 'JE #', accessor: 'jeNumber', width: '80px', sortable: true },
+  { id: 'debit', header: 'Debit', accessor: 'debit', sortable: true },
+  { id: 'credit', header: 'Credit', accessor: 'credit', sortable: true },
+  { id: 'sourceRef', header: 'Source ref #', accessor: 'sourceRef', sortable: true },
+  { id: 'date', header: 'Date', accessor: 'date', sortable: true },
+  { id: 'postedBy', header: 'Posted by', accessor: 'postedBy', sortable: true },
 ]
 
 /** ~2 rows of sm chips on a typical desktop filter width */
@@ -118,7 +119,7 @@ function AccountFilterChips({ accountIds }: AccountFilterChipsProps) {
 
 export function GlDetailReportPage() {
   const navigate = useNavigate()
-  const isDesktop = useMediaQuery('(min-width: 1024px)')
+  const isDesktop = useMediaQuery('(min-width: 768px)')
 
   const [filterAccountIds, setFilterAccountIds] = useState<string[]>(DEFAULT_SELECTED_ACCOUNT_IDS)
   const [filterStartDate, setFilterStartDate] = useState(DEFAULT_START_DATE)
@@ -137,8 +138,15 @@ export function GlDetailReportPage() {
   )
   const [tableAccountFilter, setTableAccountFilter] = useState<string | null>(null)
   const [reportActive, setReportActive] = useState(true)
+  const [appliedStartDate, setAppliedStartDate] = useState(DEFAULT_START_DATE)
+  const [appliedEndDate, setAppliedEndDate] = useState(DEFAULT_END_DATE)
 
   const hasReport = reportActive
+  const datesLocked = hasReport
+  const appliedPeriodLabel =
+    appliedStartDate && appliedEndDate
+      ? `${formatDisplayDate(appliedStartDate)} – ${formatDisplayDate(appliedEndDate)}`
+      : ''
 
   const summaries = displaySummaries
 
@@ -194,8 +202,10 @@ export function GlDetailReportPage() {
 
   const handleClear = () => {
     setFilterAccountIds([])
-    setFilterStartDate('')
-    setFilterEndDate('')
+    setFilterStartDate(DEFAULT_START_DATE)
+    setFilterEndDate(DEFAULT_END_DATE)
+    setAppliedStartDate('')
+    setAppliedEndDate('')
     setDateFieldsKey((k) => k + 1)
     setAccountSelectKey((k) => k + 1)
     setReportRows([])
@@ -205,7 +215,13 @@ export function GlDetailReportPage() {
   }
 
   const handleRunReport = () => {
-    const rows = filterReportRows(filterAccountIds, filterStartDate, filterEndDate)
+    const startDate = datesLocked ? appliedStartDate : filterStartDate
+    const endDate = datesLocked ? appliedEndDate : filterEndDate
+    if (!datesLocked) {
+      setAppliedStartDate(filterStartDate)
+      setAppliedEndDate(filterEndDate)
+    }
+    const rows = filterReportRows(filterAccountIds, startDate, endDate)
     const accountIds =
       filterAccountIds.length > 0
         ? [...filterAccountIds]
@@ -221,8 +237,21 @@ export function GlDetailReportPage() {
     setTableAccountFilter(accountId)
   }
 
+  const showDetailsTable = hasReport && isDesktop && tableData.length > 0
+  const showDesktopDetailsEmpty = isDesktop && !showDetailsTable
+  const showMobileDetailsEmpty = !isDesktop && !hasReport
+  const showMobileDetailsAlert = hasReport && !isDesktop
+
+  const detailsEmptyTitle = hasReport ? 'No transactions found' : 'No details yet'
+  const detailsEmptyDescription = !isDesktop
+    ? 'Select accounts and a date range, then run the report. Review the summary above or export the full file for line-level detail.'
+    : hasReport
+      ? 'No transactions match the current account selection and period. Use Clear to adjust filters and run the report again.'
+      : 'Select accounts and a date range, then click Run Report to view transaction details.'
+
   return (
     <div className="hub-page gl-detail-report">
+      <div className="gl-detail-report__content">
       <ModusWcTypography
         hierarchy="h1"
         size="xl"
@@ -248,7 +277,7 @@ export function GlDetailReportPage() {
               onItemSelect={handleAccountItemSelect}
             />
           </div>
-          <div className="gl-detail-report__filter-dates">
+          <div className="gl-detail-report__filter-dates" hidden={datesLocked}>
             <ModusWcDate
               key={`gl-start-${dateFieldsKey}`}
               label="Start Date"
@@ -281,14 +310,31 @@ export function GlDetailReportPage() {
             >
               Clear
             </ModusWcButton>
-            <ModusWcButton size="sm" variant="filled" color="primary" onButtonClick={handleRunReport}>
+            <ModusWcButton
+              size="sm"
+              variant="filled"
+              color="primary"
+              disabled={hasReport}
+              onButtonClick={handleRunReport}
+            >
               Run Report
             </ModusWcButton>
           </div>
         </div>
       </ModusWcCard>
 
-      <AccountFilterChips accountIds={filterAccountIds} />
+      <div className="gl-detail-report__selection">
+        {datesLocked && appliedPeriodLabel && (
+          <ModusWcTypography
+            hierarchy="p"
+            size="sm"
+            weight="semibold"
+            label={`Period: ${appliedPeriodLabel}`}
+            customClass="gl-detail-report__period"
+          />
+        )}
+        <AccountFilterChips accountIds={filterAccountIds} />
+      </div>
 
       <section className="gl-detail-report__section" hidden={!hasReport} aria-hidden={!hasReport}>
         <ModusWcTypography hierarchy="h2" size="md" weight="semibold" label="Summary" />
@@ -331,32 +377,44 @@ export function GlDetailReportPage() {
         <ModusWcTypography hierarchy="h2" size="md" weight="semibold" label="Details" />
 
         <ModusWcCard bordered={false} padding="compact">
-          <ModusWcTypography
-            hierarchy="p"
-            size="sm"
-            label="Select accounts and a date range, then run the report to view details."
-            customClass="text-[var(--modus-wc-color-base-content-low-contrast)]"
-            hidden={hasReport}
-          />
+          <div
+            className="gl-detail-report__details-empty empty-state"
+            hidden={!showDesktopDetailsEmpty && !showMobileDetailsEmpty}
+          >
+            <ModusWcIcon name="receipt" size="lg" decorative />
+            <ModusWcTypography
+              hierarchy="h3"
+              size="sm"
+              weight="semibold"
+              label={showDesktopDetailsEmpty && hasReport ? detailsEmptyTitle : 'No details yet'}
+            />
+            <ModusWcTypography
+              hierarchy="p"
+              size="sm"
+              label={detailsEmptyDescription}
+              customClass="text-[var(--modus-wc-color-base-content-low-contrast)]"
+            />
+          </div>
 
-          <div hidden={!hasReport || !isDesktop}>
+          <div className="gl-detail-report__table-wrap" hidden={!showDetailsTable}>
             <ModusWcTable
               columns={TABLE_COLUMNS}
               data={tableData}
               zebra
-              sortable={false}
+              sortable
               hover={false}
               density="comfortable"
               caption="GL account detail transactions"
             />
           </div>
 
-          <ModusWcAlert
-            hidden={!hasReport || isDesktop}
-            variant="info"
-            alertTitle="Optimized for mobile"
-            alertDescription="Your multi-column detailed report is hidden for mobile view. Review your account summaries or export the full file for desktop."
-          />
+          <div className="gl-detail-report__mobile-alert-wrap" hidden={!showMobileDetailsAlert}>
+            <ModusWcAlert
+              variant="info"
+              alertTitle="Optimized for mobile"
+              alertDescription="Your multi-column detailed report is hidden for mobile view. Review your account summaries or export the full file for desktop."
+            />
+          </div>
         </ModusWcCard>
 
         <div className="gl-detail-report__export-row" hidden={!hasReport}>
@@ -366,15 +424,18 @@ export function GlDetailReportPage() {
           </ModusWcButton>
         </div>
       </section>
+      </div>
 
-      <ModusWcButton
-        size="sm"
-        variant="borderless"
-        color="primary"
-        onButtonClick={() => navigate('/reports')}
-      >
-        Back
-      </ModusWcButton>
+      <footer className="gl-detail-report__footer">
+        <ModusWcButton
+          size="sm"
+          variant="borderless"
+          color="primary"
+          onButtonClick={() => navigate('/reports')}
+        >
+          Back
+        </ModusWcButton>
+      </footer>
     </div>
   )
 }
