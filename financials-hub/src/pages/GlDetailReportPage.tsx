@@ -2,12 +2,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ModusWcAlert,
+  ModusWcAutocomplete,
   ModusWcButton,
   ModusWcCard,
   ModusWcChip,
   ModusWcDate,
   ModusWcIcon,
-  ModusWcSelect,
   ModusWcTable,
   ModusWcTypography,
 } from '@trimble-oss/moduswebcomponents-react'
@@ -42,11 +42,9 @@ const CHIP_COLLAPSED_VISIBLE = 8
 
 interface AccountFilterChipsProps {
   accountIds: string[]
-  onRemoveAccount: (accountId: string) => void
-  onClearAll: () => void
 }
 
-function AccountFilterChips({ accountIds, onRemoveAccount, onClearAll }: AccountFilterChipsProps) {
+function AccountFilterChips({ accountIds }: AccountFilterChipsProps) {
   const [expanded, setExpanded] = useState(false)
   const allSelected = accountIds.length === GL_ACCOUNTS.length
   const overflowCount = Math.max(0, accountIds.length - CHIP_COLLAPSED_VISIBLE)
@@ -69,8 +67,6 @@ function AccountFilterChips({ accountIds, onRemoveAccount, onClearAll }: Account
           size="sm"
           variant="outline"
           label={`All Accounts (${GL_ACCOUNTS.length})`}
-          showRemove
-          onChipRemove={onClearAll}
         />
       </div>
     )
@@ -97,8 +93,6 @@ function AccountFilterChips({ accountIds, onRemoveAccount, onClearAll }: Account
             size="sm"
             variant="outline"
             label={accountLabel(account)}
-            showRemove
-            onChipRemove={() => onRemoveAccount(id)}
           />
         )
       })}
@@ -130,7 +124,7 @@ export function GlDetailReportPage() {
   const [filterStartDate, setFilterStartDate] = useState(DEFAULT_START_DATE)
   const [filterEndDate, setFilterEndDate] = useState(DEFAULT_END_DATE)
   const [dateFieldsKey, setDateFieldsKey] = useState(0)
-  const [selectValue, setSelectValue] = useState('')
+  const [accountSelectKey, setAccountSelectKey] = useState(0)
 
   const [reportRows, setReportRows] = useState(() =>
     filterReportRows(DEFAULT_SELECTED_ACCOUNT_IDS, DEFAULT_START_DATE, DEFAULT_END_DATE),
@@ -160,33 +154,42 @@ export function GlDetailReportPage() {
 
   const allAccountsSelected = filterAccountIds.length === GL_ACCOUNTS.length
 
-  const availableOptions = useMemo(
+  const accountAutocompleteItems = useMemo(
     () => [
-      { label: 'Select accounts', value: '' },
-      ...(allAccountsSelected
-        ? []
-        : [{ label: 'All Accounts', value: ALL_ACCOUNTS_OPTION }]),
-      ...GL_ACCOUNTS
-        .filter((a) => !filterAccountIds.includes(a.id))
-        .map((a) => ({ label: accountLabel(a), value: a.id })),
+      {
+        label: 'All Accounts',
+        value: ALL_ACCOUNTS_OPTION,
+        visibleInMenu: true,
+        checkbox: true,
+        selected: allAccountsSelected,
+      },
+      ...GL_ACCOUNTS.map((account) => ({
+        label: accountLabel(account),
+        value: account.id,
+        visibleInMenu: true,
+        checkbox: true,
+        selected: filterAccountIds.includes(account.id),
+      })),
     ],
     [filterAccountIds, allAccountsSelected],
   )
 
-  const handleAccountSelect = (value: string) => {
-    if (!value) return
-    if (value === ALL_ACCOUNTS_OPTION) {
-      setFilterAccountIds(ALL_ACCOUNT_IDS)
-      setSelectValue('')
+  const handleAccountItemSelect = (e: CustomEvent<{ value: string; selected?: boolean }>) => {
+    const item = e.detail
+    const wasSelected = item.selected ?? false
+
+    if (item.value === ALL_ACCOUNTS_OPTION) {
+      setFilterAccountIds(wasSelected ? [] : ALL_ACCOUNT_IDS)
       return
     }
-    if (filterAccountIds.includes(value)) return
-    setFilterAccountIds((prev) => [...prev, value])
-    setSelectValue('')
-  }
 
-  const handleRemoveAccount = (accountId: string) => {
-    setFilterAccountIds((prev) => prev.filter((id) => id !== accountId))
+    setFilterAccountIds((prev) => {
+      if (wasSelected) {
+        return prev.filter((id) => id !== item.value)
+      }
+      if (prev.includes(item.value)) return prev
+      return [...prev, item.value]
+    })
   }
 
   const handleClear = () => {
@@ -194,7 +197,7 @@ export function GlDetailReportPage() {
     setFilterStartDate('')
     setFilterEndDate('')
     setDateFieldsKey((k) => k + 1)
-    setSelectValue('')
+    setAccountSelectKey((k) => k + 1)
     setReportRows([])
     setDisplaySummaries([])
     setTableAccountFilter(null)
@@ -231,15 +234,18 @@ export function GlDetailReportPage() {
       <ModusWcCard bordered={false} padding="compact">
         <div className="gl-detail-report__filters">
           <div className="gl-detail-report__filter-account">
-            <ModusWcSelect
+            <ModusWcAutocomplete
+              key={`gl-account-select-${accountSelectKey}`}
               label="Account"
               size="sm"
-              value={selectValue}
-              options={availableOptions}
-              onInputChange={(e) => {
-                const value = (e as CustomEvent).detail?.target?.value ?? ''
-                handleAccountSelect(value)
-              }}
+              placeholder="Select accounts"
+              multiSelect
+              leaveMenuOpen
+              showMenuOnFocus
+              minChars={0}
+              maxChips={-1}
+              items={accountAutocompleteItems}
+              onItemSelect={handleAccountItemSelect}
             />
           </div>
           <div className="gl-detail-report__filter-dates">
@@ -282,11 +288,7 @@ export function GlDetailReportPage() {
         </div>
       </ModusWcCard>
 
-      <AccountFilterChips
-        accountIds={filterAccountIds}
-        onRemoveAccount={handleRemoveAccount}
-        onClearAll={() => setFilterAccountIds([])}
-      />
+      <AccountFilterChips accountIds={filterAccountIds} />
 
       <section className="gl-detail-report__section" hidden={!hasReport} aria-hidden={!hasReport}>
         <ModusWcTypography hierarchy="h2" size="md" weight="semibold" label="Summary" />

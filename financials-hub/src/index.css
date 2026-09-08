@@ -1125,6 +1125,12 @@ modus-wc-button i.modus-wc-icon {
   justify-content: flex-end;
 }
 
+/* Selected accounts render as chips below; hide duplicates inside the autocomplete field */
+.gl-detail-report__filter-account .modus-wc-autocomplete-content modus-wc-chip,
+.gl-detail-report__filter-account .modus-wc-autocomplete-more-indicator {
+  display: none;
+}
+
 .gl-detail-report__chips {
   display: flex;
   flex-wrap: wrap;
