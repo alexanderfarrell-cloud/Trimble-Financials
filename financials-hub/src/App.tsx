@@ -19,6 +19,7 @@ import ClosePeriodWizard from './pages/ClosePeriodWizard'
 import ReopenPeriodWizard from './pages/ReopenPeriodWizard'
 import AccountingHub from './pages/AccountingHub'
 import ReportsHub from './pages/ReportsHub'
+import GlDetailReportPage from './pages/GlDetailReportPage'
 import { PeriodsProvider } from './context/PeriodsContext'
 
 const SIDENAV_MAX_WIDTH = '256px'
@@ -102,9 +103,12 @@ export default function App() {
               <ModusWcMenu size="lg">
                 {NAV_ITEMS.map(({ path, label }) => {
                   const isAccounting = path === '/accounting'
+                  const isReports = path === '/reports'
                   const selected = isAccounting
                     ? location.pathname.startsWith('/accounting') || location.pathname.startsWith('/periods')
-                    : location.pathname === path
+                    : isReports
+                      ? location.pathname.startsWith('/reports')
+                      : location.pathname === path
                   return (
                     <ModusWcMenuItem
                       key={path}
@@ -134,6 +138,7 @@ export default function App() {
                 <Route path="/periods/close" element={<ClosePeriodWizard />} />
                 <Route path="/periods/reopen" element={<ReopenPeriodWizard />} />
                 <Route path="/reports" element={<ReportsHub />} />
+                <Route path="/reports/gl-detail" element={<GlDetailReportPage />} />
               </Routes>
             </PeriodsProvider>
           </main>
