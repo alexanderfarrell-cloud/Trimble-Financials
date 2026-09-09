@@ -6,6 +6,7 @@ on:
       - master
       - gh-pages
     paths:
+      - '.github/workflows/branch-preview.yml'
       - 'financials-hub/**'
       - 'mockups-hub/**'
 
